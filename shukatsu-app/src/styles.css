@@ -1038,7 +1038,7 @@ button:focus-visible {
   position: relative;
   /* 画面の高さに合わせて縮め、下の四角（選んでいるタスク）が見切れないようにします */
   /* （iPhoneの下のホームバーの分も引きます） */
-  height: clamp(170px, calc(100dvh - 440px - env(safe-area-inset-top) - env(safe-area-inset-bottom)), 360px);
+  height: clamp(160px, calc(100dvh - 480px - env(safe-area-inset-top) - env(safe-area-inset-bottom)), 330px);
   margin: 0 -20px;
   overflow: hidden;
   perspective: 820px;
@@ -1749,4 +1749,16 @@ button:focus-visible {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* カードの場所を低くしても、上の「SELECTED」の札が切れないようにします
+   （左右ははみ出さないように切り、上だけ少し外まで見せます） */
+.ring-stage {
+  overflow: visible;
+  clip-path: inset(-14px 0 -6px 0);
+}
+@media (max-height: 760px) {
+  .ring-inner {
+    min-height: 160px;
+  }
 }
