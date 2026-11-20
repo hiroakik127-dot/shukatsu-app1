@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 import { esStore, friendlyError, isCloud, taskStore, useCollection } from './store'
 import { todayISO } from './lib/dates'
 import TaskEditor from './components/TaskEditor'
+import ThemePicker from './components/ThemePicker'
 import { CompleteBurst, Toast } from './components/Feedback'
 import Home from './screens/Home'
 import Todo from './screens/Todo'
@@ -108,6 +109,7 @@ function Login() {
         )}
         {info && <p className="muted">{info}</p>}
       </form>
+      <ThemePicker />
     </div>
   )
 }

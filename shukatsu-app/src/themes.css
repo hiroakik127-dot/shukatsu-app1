@@ -1,0 +1,327 @@
+/* ===== デザイン（雰囲気）ごとの見た目 =====
+   色は配色（src/lib/themes.js）が決めます。ここでは文字の形・角・光・模様・飾りだけを変えます。
+   html の data-design で切り替えます。 */
+
+/* 背景の模様を描く層（デザインごとに中身を変えます） */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ---------- サイバー（最初の見た目） ---------- */
+[data-design='cyber'] body::before {
+  background-image: linear-gradient(rgba(var(--a-rgb), 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--a-rgb), 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ---------- ガーリー ---------- */
+[data-design='girly'] {
+  --font-body: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
+  --font-display: Quicksand, 'Zen Maru Gothic', sans-serif;
+  --r: 16px;
+  --r-lg: 24px;
+  --glow-design: 0.5;
+  --line-a: 0.4;
+}
+[data-design='girly'] body::before {
+  background-image: radial-gradient(rgba(var(--a-rgb), 0.12) 2px, transparent 2.6px),
+    radial-gradient(rgba(var(--a-rgb), 0.07) 2px, transparent 2.6px);
+  background-size: 26px 26px;
+  background-position: 0 0, 13px 13px;
+}
+[data-design='girly'] .eyebrow {
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+[data-design='girly'] .eyebrow::after {
+  content: ' ♡';
+}
+[data-design='girly'] .card .corner.tl {
+  display: none;
+}
+[data-design='girly'] .card .corner.br {
+  right: 12px;
+  bottom: 8px;
+  width: auto;
+  height: auto;
+  border: 0;
+}
+[data-design='girly'] .card .corner.br::before {
+  content: '♡';
+  color: var(--cy);
+  font-size: 13px;
+}
+[data-design='girly'] .chip,
+[data-design='girly'] .btn,
+[data-design='girly'] .stat,
+[data-design='girly'] .type-cell,
+[data-design='girly'] .seg button,
+[data-design='girly'] .icon-btn,
+[data-design='girly'] input,
+[data-design='girly'] textarea {
+  border-radius: 999px;
+}
+[data-design='girly'] textarea,
+[data-design='girly'] .stat,
+[data-design='girly'] .type-cell {
+  border-radius: 18px;
+}
+[data-design='girly'] .card,
+[data-design='girly'] .todo-row,
+[data-design='girly'] .panel {
+  box-shadow: 0 6px 18px rgba(var(--a-rgb), 0.18);
+}
+[data-design='girly'] .holo::before {
+  border-style: dotted;
+  border-width: 3px;
+}
+
+/* ---------- 魔法の学校 ---------- */
+[data-design='magic'] {
+  --font-body: 'Shippori Mincho', 'Noto Serif JP', serif;
+  --font-display: Cinzel, 'Shippori Mincho', serif;
+  --r: 3px;
+  --r-lg: 8px;
+  --glow-design: 0.7;
+  --line-a: 0.6;
+}
+/* 星のまたたく夜空（明るい配色では羊皮紙のしみ） */
+[data-design='magic'] body::before {
+  background-image: radial-gradient(1.2px 1.2px at 20% 30%, rgba(var(--a-rgb), 0.7), transparent),
+    radial-gradient(1px 1px at 70% 10%, rgba(var(--a-rgb), 0.6), transparent),
+    radial-gradient(1.4px 1.4px at 40% 80%, rgba(var(--a-rgb), 0.5), transparent),
+    radial-gradient(1px 1px at 85% 60%, rgba(var(--a-rgb), 0.6), transparent),
+    radial-gradient(1px 1px at 10% 70%, rgba(var(--a-rgb), 0.5), transparent),
+    radial-gradient(120% 80% at 50% 50%, transparent 60%, rgba(var(--bg-rgb), 0.9));
+  background-size: 180px 180px, 240px 240px, 300px 300px, 210px 210px, 260px 260px, 100% 100%;
+}
+[data-mode='light'][data-design='magic'] body::before {
+  background-image: radial-gradient(40% 30% at 20% 20%, rgba(var(--text-rgb), 0.06), transparent),
+    radial-gradient(35% 25% at 80% 70%, rgba(var(--text-rgb), 0.07), transparent),
+    radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(var(--text-rgb), 0.16));
+  background-size: 100% 100%;
+}
+[data-design='magic'] .eyebrow {
+  letter-spacing: 4px;
+}
+[data-design='magic'] h1 {
+  letter-spacing: 1px;
+}
+[data-design='magic'] .card,
+[data-design='magic'] .todo-row,
+[data-design='magic'] .panel,
+[data-design='magic'] .sheet {
+  border-style: double;
+  border-width: 3px;
+}
+[data-design='magic'] .card .corner {
+  width: auto;
+  height: auto;
+  border: 0;
+  color: var(--cy);
+  font-size: 12px;
+  line-height: 1;
+}
+[data-design='magic'] .card .corner.tl {
+  left: 6px;
+  top: 4px;
+}
+[data-design='magic'] .card .corner.br {
+  right: 6px;
+  bottom: 4px;
+}
+[data-design='magic'] .card .corner::before {
+  content: '✦';
+}
+[data-design='magic'] .card .row {
+  padding-left: 14px;
+}
+[data-design='magic'] .holo::before {
+  border-style: double;
+  border-width: 3px;
+}
+[data-design='magic'] .burst-stamp {
+  font-family: var(--font-display);
+  border-style: double;
+  border-width: 5px;
+}
+
+/* ---------- シンプル ---------- */
+[data-design='simple'] {
+  --font-body: system-ui, -apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  --font-display: system-ui, -apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  --r: 10px;
+  --r-lg: 16px;
+  --glow-design: 0;
+  --line-a: 0.22;
+}
+[data-design='simple'] .eyebrow {
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+[data-design='simple'] .card .corner,
+[data-design='simple'] .fab .ring,
+[data-design='simple'] .holo::before {
+  display: none;
+}
+[data-design='simple'] .card,
+[data-design='simple'] .todo-row,
+[data-design='simple'] .panel {
+  background: var(--surface);
+}
+[data-design='simple'] .holo-num,
+[data-design='simple'] .stat b,
+[data-design='simple'] .type-cell b {
+  font-weight: 700;
+}
+
+/* ---------- 和風 ---------- */
+[data-design='wa'] {
+  --font-body: 'Zen Old Mincho', 'Noto Serif JP', serif;
+  --font-display: 'Zen Old Mincho', 'Noto Serif JP', serif;
+  --r: 2px;
+  --r-lg: 4px;
+  --glow-design: 0.2;
+  --line-a: 0.45;
+}
+/* 青海波（せいがいは）の模様 */
+[data-design='wa'] body::before {
+  --w: rgba(var(--a-rgb), 0.07);
+  background-image: radial-gradient(circle at 50% 100%, transparent 7px, var(--w) 7px 9px, transparent 9px 14px, var(--w) 14px 16px, transparent 16px 21px, var(--w) 21px 23px, transparent 23px),
+    radial-gradient(circle at 50% 100%, transparent 7px, var(--w) 7px 9px, transparent 9px 14px, var(--w) 14px 16px, transparent 16px 21px, var(--w) 21px 23px, transparent 23px);
+  background-size: 48px 24px;
+  background-position: 0 0, 24px 12px;
+}
+[data-design='wa'] .eyebrow {
+  letter-spacing: 5px;
+}
+[data-design='wa'] h1 {
+  letter-spacing: 3px;
+  font-weight: 700;
+}
+[data-design='wa'] .card .corner {
+  display: none;
+}
+/* 短冊のように、左に色の帯を付けます */
+[data-design='wa'] .card,
+[data-design='wa'] .todo-row {
+  border-left: 5px solid var(--cy);
+}
+[data-design='wa'] .card.urgent {
+  border-left-color: var(--or);
+}
+[data-design='wa'] .burst-stamp {
+  border-radius: 50%;
+  padding: 14px 18px;
+  letter-spacing: 2px;
+}
+
+/* ---------- アメカジ ---------- */
+[data-design='amekaji'] {
+  --font-body: 'Noto Sans JP', system-ui, sans-serif;
+  --font-display: 'Bebas Neue', 'Noto Sans JP', sans-serif;
+  --r: 6px;
+  --r-lg: 10px;
+  --glow-design: 0;
+  --line-a: 0.55;
+}
+/* デニムの綾織り */
+[data-design='amekaji'] body::before {
+  background-image: repeating-linear-gradient(45deg, rgba(var(--text-rgb), 0.035) 0 2px, transparent 2px 5px),
+    repeating-linear-gradient(-45deg, rgba(var(--bg-rgb), 0.25) 0 1px, transparent 1px 6px);
+}
+[data-design='amekaji'] .eyebrow {
+  font-size: 16px;
+  letter-spacing: 3px;
+}
+[data-design='amekaji'] h1 {
+  font-weight: 900;
+}
+[data-design='amekaji'] .holo-num {
+  font-size: 68px;
+}
+[data-design='amekaji'] .stat b,
+[data-design='amekaji'] .type-cell b {
+  font-size: 30px;
+}
+[data-design='amekaji'] .card .corner {
+  display: none;
+}
+[data-design='amekaji'] .card,
+[data-design='amekaji'] .todo-row,
+[data-design='amekaji'] .panel {
+  border-width: 2px;
+  box-shadow: 3px 3px 0 rgba(var(--bg-rgb), 0.6);
+}
+/* ステッチ（縫い目） */
+[data-design='amekaji'] .card::before,
+[data-design='amekaji'] .panel::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1.5px dashed rgba(var(--a-rgb), 0.55);
+  border-radius: calc(var(--r) - 2px);
+  pointer-events: none;
+}
+[data-design='amekaji'] .panel {
+  position: relative;
+}
+[data-design='amekaji'] .burst-stamp {
+  font-family: var(--font-display);
+  font-size: 44px;
+}
+
+/* ---------- ナチュラル ---------- */
+[data-design='natural'] {
+  --font-body: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+  --font-display: 'Josefin Sans', 'Zen Kaku Gothic New', sans-serif;
+  --r: 14px;
+  --r-lg: 22px;
+  --glow-design: 0.15;
+  --line-a: 0.35;
+}
+/* やわらかい木漏れ日 */
+[data-design='natural'] body::before {
+  background-image: radial-gradient(40% 30% at 10% 10%, rgba(var(--a-rgb), 0.12), transparent 70%),
+    radial-gradient(35% 28% at 90% 35%, rgba(var(--ok-rgb), 0.1), transparent 70%),
+    radial-gradient(45% 30% at 30% 90%, rgba(var(--star-rgb), 0.1), transparent 70%);
+}
+[data-design='natural'] .eyebrow {
+  letter-spacing: 3px;
+}
+[data-design='natural'] .eyebrow::before {
+  content: '❀ ';
+}
+[data-design='natural'] .card .corner.tl {
+  display: none;
+}
+[data-design='natural'] .card .corner.br {
+  right: 12px;
+  bottom: 8px;
+  width: auto;
+  height: auto;
+  border: 0;
+}
+[data-design='natural'] .card .corner.br::before {
+  content: '❦';
+  color: var(--cy);
+  font-size: 14px;
+}
+[data-design='natural'] .card,
+[data-design='natural'] .todo-row,
+[data-design='natural'] .panel {
+  box-shadow: 0 4px 14px rgba(var(--bg-rgb), 0.35);
+}
+[data-design='natural'] .holo::before {
+  border-style: dotted;
+}
+
+/* 右下の飾りとゲージが重ならないようにします */
+[data-design='girly'] .card .progress-line,
+[data-design='natural'] .card .progress-line {
+  margin-right: 22px;
+}

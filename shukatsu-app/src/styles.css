@@ -1,11 +1,42 @@
 :root {
+  /* 配色（src/lib/themes.js の applyTheme で上書きされます。これは最初の見た目） */
   --bg: #020a10;
+  --bg-rgb: 2, 10, 16;
+  --glow-bg: #06222d;
+  --surface: #071b24;
+  --surface-rgb: 7, 27, 36;
+  --surface2: #0a303e;
   --cy: #7df9ff;
+  --a-rgb: 125, 249, 255;
+  --on-a: #111111;
   --cy-soft: #9be8f5;
-  --muted: #8cc9d4;
   --text: #e6fcff;
+  --text-rgb: 230, 252, 255;
+  --text2: #cff8ff;
+  --muted: #8cc9d4;
+  --muted-rgb: 140, 201, 212;
   --or: #ff9f43;
-  --line: rgba(125, 249, 255, 0.45);
+  --warn-rgb: 255, 159, 67;
+  --ok: #6dffb0;
+  --ok-rgb: 109, 255, 176;
+  --star: #ffd66b;
+  --star-rgb: 255, 214, 107;
+  --scheme: dark;
+  --error: #ffb4a8;
+  --sun: #ff8a8a;
+  --sat: #8ab8ff;
+  --glow-mode: 1;
+
+  /* デザイン（themes.css の [data-design] で上書きされます） */
+  --font-body: 'Noto Sans JP', system-ui, sans-serif;
+  --font-display: Orbitron, 'Noto Sans JP', sans-serif;
+  --r: 4px;
+  --r-lg: 12px;
+  --glow-design: 1;
+  --line-a: 0.45;
+
+  --glow: calc(var(--glow-design) * var(--glow-mode));
+  --line: rgba(var(--a-rgb), var(--line-a));
 }
 
 * {
@@ -20,9 +51,9 @@ body,
 }
 
 body {
-  background: radial-gradient(110% 60% at 50% 20%, #06222d 0%, var(--bg) 72%) fixed;
-  color: #cff8ff;
-  font-family: 'Noto Sans JP', system-ui, sans-serif;
+  background: radial-gradient(110% 60% at 50% 20%, var(--glow-bg) 0%, var(--bg) 72%) fixed;
+  color: var(--text2);
+  font-family: var(--font-body);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -48,7 +79,7 @@ textarea {
 }
 
 .eyebrow {
-  font-family: Orbitron, sans-serif;
+  font-family: var(--font-display);
   font-size: 11px;
   letter-spacing: 3px;
   color: var(--cy);
@@ -83,7 +114,7 @@ header {
   margin: 0 0 12px;
   padding: 10px 12px;
   border: 1px dashed var(--line);
-  border-radius: 4px;
+  border-radius: var(--r);
   font-size: 12px;
   line-height: 1.7;
   color: var(--cy-soft);
@@ -91,7 +122,7 @@ header {
 
 .error {
   margin: 8px 0;
-  color: #ffb4a8;
+  color: var(--error);
   font-size: 13px;
 }
 
@@ -109,8 +140,8 @@ header {
   flex: none;
   height: 44px;
   padding: 0 16px;
-  border: 1px solid rgba(125, 249, 255, 0.3);
-  border-radius: 4px;
+  border: 1px solid rgba(var(--a-rgb), 0.3);
+  border-radius: var(--r);
   background: transparent;
   color: var(--cy-soft);
   font-size: 14px;
@@ -120,8 +151,8 @@ header {
 
 .chip.on {
   border-color: var(--cy);
-  background: rgba(125, 249, 255, 0.2);
-  box-shadow: 0 0 14px rgba(92, 225, 255, 0.35);
+  background: rgba(var(--a-rgb), 0.2);
+  box-shadow: 0 0 14px rgba(var(--a-rgb), calc(0.35 * var(--glow)));
   color: var(--text);
   font-weight: 700;
 }
@@ -143,15 +174,15 @@ header {
   text-align: left;
   color: inherit;
   border: 1px solid var(--line);
-  border-radius: 4px;
-  background: linear-gradient(135deg, rgba(92, 225, 255, 0.16), rgba(92, 225, 255, 0.04));
-  box-shadow: 0 0 20px rgba(92, 225, 255, 0.25), inset 0 0 18px rgba(92, 225, 255, 0.1);
+  border-radius: var(--r);
+  background: linear-gradient(135deg, rgba(var(--a-rgb), 0.16), rgba(var(--a-rgb), 0.04));
+  box-shadow: 0 0 20px rgba(var(--a-rgb), calc(0.25 * var(--glow))), inset 0 0 18px rgba(var(--a-rgb), calc(0.1 * var(--glow)));
   cursor: pointer;
 }
 
 .card.urgent {
-  border-color: rgba(255, 159, 67, 0.75);
-  box-shadow: 0 0 20px rgba(255, 159, 67, 0.3), inset 0 0 18px rgba(92, 225, 255, 0.1);
+  border-color: rgba(var(--warn-rgb), 0.75);
+  box-shadow: 0 0 20px rgba(var(--warn-rgb), calc(0.3 * var(--glow))), inset 0 0 18px rgba(var(--a-rgb), calc(0.1 * var(--glow)));
 }
 
 .card .corner {
@@ -190,7 +221,7 @@ header {
 .card .stars {
   margin-left: 10px;
   letter-spacing: 1px;
-  color: #ffd66b;
+  color: var(--star);
   font-weight: 400;
 }
 
@@ -208,23 +239,23 @@ header {
 
 .card .event {
   font-size: 13px;
-  color: #cff8ff;
+  color: var(--text2);
 }
 
 .card .gauge {
   display: block;
   height: 3px;
-  background: rgba(125, 249, 255, 0.18);
+  background: rgba(var(--a-rgb), 0.18);
 }
 .card .gauge span {
   display: block;
   height: 3px;
   background: var(--cy);
-  box-shadow: 0 0 8px var(--cy);
+  box-shadow: 0 0 8px rgba(var(--a-rgb), var(--glow));
 }
 .card.urgent .gauge span {
   background: var(--or);
-  box-shadow: 0 0 8px var(--or);
+  box-shadow: 0 0 8px rgba(var(--warn-rgb), var(--glow));
 }
 
 .empty {
@@ -261,8 +292,8 @@ header {
   justify-content: center;
   border: 1px solid var(--cy);
   border-radius: 50%;
-  background: rgba(125, 249, 255, 0.18);
-  box-shadow: 0 0 18px rgba(125, 249, 255, 0.6);
+  background: rgba(var(--a-rgb), 0.18);
+  box-shadow: 0 0 18px rgba(var(--a-rgb), calc(0.6 * var(--glow)));
   color: var(--text);
   font-size: 24px;
 }
@@ -281,7 +312,7 @@ header {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(2, 10, 16, 0.75);
+  background: rgba(var(--bg-rgb), 0.75);
 }
 
 .sheet {
@@ -294,9 +325,9 @@ header {
   gap: 14px;
   padding: 20px;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #06222d;
-  box-shadow: 0 0 40px rgba(92, 225, 255, 0.2);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: 0 0 40px rgba(var(--a-rgb), calc(0.2 * var(--glow)));
 }
 
 .sheet-head {
@@ -308,8 +339,8 @@ header {
 .icon-btn {
   width: 44px;
   height: 44px;
-  border: 1px solid rgba(125, 249, 255, 0.3);
-  border-radius: 4px;
+  border: 1px solid rgba(var(--a-rgb), 0.3);
+  border-radius: var(--r);
   background: transparent;
   color: var(--text);
   font-size: 22px;
@@ -328,18 +359,18 @@ label,
 input {
   height: 48px;
   padding: 0 12px;
-  border: 1px solid rgba(125, 249, 255, 0.5);
-  border-radius: 4px;
-  background: rgba(125, 249, 255, 0.08);
+  border: 1px solid rgba(var(--a-rgb), 0.5);
+  border-radius: var(--r);
+  background: rgba(var(--a-rgb), 0.08);
   color: var(--text);
   font-size: 16px;
-  color-scheme: dark;
+  color-scheme: var(--scheme);
 }
 textarea {
   padding: 12px;
-  border: 1px solid rgba(125, 249, 255, 0.5);
-  border-radius: 4px;
-  background: rgba(125, 249, 255, 0.08);
+  border: 1px solid rgba(var(--a-rgb), 0.5);
+  border-radius: var(--r);
+  background: rgba(var(--a-rgb), 0.08);
   color: var(--text);
   font-size: 16px;
   line-height: 1.7;
@@ -347,7 +378,7 @@ textarea {
 }
 input::placeholder,
 textarea::placeholder {
-  color: #6fa3ae;
+  color: rgba(var(--muted-rgb), 0.8);
 }
 input:focus-visible,
 textarea:focus-visible,
@@ -366,8 +397,8 @@ button:focus-visible {
   height: 44px;
   padding: 0 2px;
   white-space: nowrap;
-  border: 1px solid rgba(125, 249, 255, 0.3);
-  border-radius: 4px;
+  border: 1px solid rgba(var(--a-rgb), 0.3);
+  border-radius: var(--r);
   background: transparent;
   color: var(--cy-soft);
   font-size: 14px;
@@ -378,7 +409,7 @@ button:focus-visible {
 }
 .seg button.on {
   border-color: var(--cy);
-  background: rgba(125, 249, 255, 0.2);
+  background: rgba(var(--a-rgb), 0.2);
   color: var(--text);
   font-weight: 700;
 }
@@ -393,14 +424,14 @@ button:focus-visible {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #6fa3ae;
+  color: rgba(var(--muted-rgb), 0.8);
   font-size: 28px;
   line-height: 1;
   cursor: pointer;
 }
 .stars-input button.on {
-  color: #ffd66b;
-  text-shadow: 0 0 10px rgba(255, 214, 107, 0.6);
+  color: var(--star);
+  text-shadow: 0 0 10px rgba(var(--star-rgb), calc(0.6 * var(--glow)));
 }
 
 .sheet-actions {
@@ -413,26 +444,26 @@ button:focus-visible {
   flex: 1;
   height: 48px;
   padding: 0 18px;
-  border-radius: 4px;
+  border-radius: var(--r);
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
 }
 .btn.primary {
   border: 1px solid var(--cy);
-  background: rgba(125, 249, 255, 0.2);
-  box-shadow: 0 0 16px rgba(125, 249, 255, 0.35);
+  background: rgba(var(--a-rgb), 0.2);
+  box-shadow: 0 0 16px rgba(var(--a-rgb), calc(0.35 * var(--glow)));
   color: var(--text);
 }
 .btn.danger {
   flex: none;
   border: 1px solid var(--or);
-  background: rgba(255, 159, 67, 0.12);
-  color: #ffd3a3;
+  background: rgba(var(--warn-rgb), 0.12);
+  color: var(--or);
 }
 .btn.ghost {
   flex: none;
-  border: 1px solid rgba(125, 249, 255, 0.3);
+  border: 1px solid rgba(var(--a-rgb), 0.3);
   background: transparent;
   color: var(--cy-soft);
 }
@@ -447,13 +478,17 @@ button:focus-visible {
 .panel {
   padding: 18px;
   border: 1px solid var(--line);
-  border-radius: 4px;
-  background: linear-gradient(135deg, rgba(92, 225, 255, 0.14), rgba(92, 225, 255, 0.03));
+  border-radius: var(--r);
+  background: linear-gradient(135deg, rgba(var(--a-rgb), 0.14), rgba(var(--a-rgb), 0.03));
 }
 .login {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+.login .btn,
+.login .seg button {
+  flex: none;
 }
 
 /* 完了したタスク */
@@ -463,7 +498,7 @@ button:focus-visible {
 }
 .card.done .name {
   text-decoration: line-through;
-  text-decoration-color: rgba(230, 252, 255, 0.5);
+  text-decoration-color: rgba(var(--text-rgb), 0.5);
 }
 
 .center-text {
@@ -487,7 +522,7 @@ button:focus-visible {
   padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   border-top: 1px solid var(--line);
-  background: rgba(3, 18, 26, 0.94);
+  background: rgba(var(--surface-rgb), 0.94);
   backdrop-filter: blur(8px);
 }
 .tabbar button {
@@ -498,7 +533,7 @@ button:focus-visible {
   min-height: 56px;
   padding: 6px 0;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--r);
   background: transparent;
   color: var(--muted);
   font-size: 11px;
@@ -509,10 +544,10 @@ button:focus-visible {
   line-height: 1.2;
 }
 .tabbar button.on {
-  background: rgba(125, 249, 255, 0.12);
+  background: rgba(var(--a-rgb), 0.12);
   color: var(--text);
   font-weight: 700;
-  text-shadow: 0 0 10px rgba(125, 249, 255, 0.7);
+  text-shadow: 0 0 10px rgba(var(--a-rgb), calc(0.7 * var(--glow)));
 }
 
 /* ホーム（ホロ） */
@@ -523,7 +558,7 @@ button:focus-visible {
 }
 .today {
   margin: 0;
-  font-family: Orbitron, sans-serif;
+  font-family: var(--font-display);
   font-size: 13px;
   letter-spacing: 2px;
   color: var(--cy-soft);
@@ -538,14 +573,14 @@ button:focus-visible {
   position: absolute;
   inset: 0;
   transform: rotate(-90deg);
-  filter: drop-shadow(0 0 10px rgba(125, 249, 255, 0.6));
+  filter: drop-shadow(0 0 10px rgba(var(--a-rgb), calc(0.6 * var(--glow))));
 }
 .holo-ring circle {
   fill: none;
   stroke-width: 4;
 }
 .holo-ring .track {
-  stroke: rgba(125, 249, 255, 0.15);
+  stroke: rgba(var(--a-rgb), 0.15);
 }
 .holo-ring .bar {
   stroke: var(--cy);
@@ -556,7 +591,7 @@ button:focus-visible {
   content: '';
   position: absolute;
   inset: 22px;
-  border: 1px dashed rgba(125, 249, 255, 0.35);
+  border: 1px dashed rgba(var(--a-rgb), 0.35);
   border-radius: 50%;
   animation: spin 30s linear infinite;
 }
@@ -570,11 +605,11 @@ button:focus-visible {
   text-align: center;
 }
 .holo-num {
-  font-family: Orbitron, sans-serif;
+  font-family: var(--font-display);
   font-size: 54px;
   font-weight: 700;
   color: var(--text);
-  text-shadow: 0 0 18px rgba(125, 249, 255, 0.8);
+  text-shadow: 0 0 18px rgba(var(--a-rgb), calc(0.8 * var(--glow)));
 }
 .holo-label {
   font-size: 13px;
@@ -598,20 +633,20 @@ button:focus-visible {
   gap: 2px;
   padding: 12px 4px;
   border: 1px solid var(--line);
-  border-radius: 4px;
-  background: rgba(125, 249, 255, 0.06);
+  border-radius: var(--r);
+  background: rgba(var(--a-rgb), 0.06);
   color: var(--cy-soft);
   font-size: 12px;
   cursor: pointer;
 }
 .stat b {
-  font-family: Orbitron, sans-serif;
+  font-family: var(--font-display);
   font-size: 24px;
   color: var(--text);
 }
 .stat.warn {
-  border-color: rgba(255, 159, 67, 0.75);
-  color: #ffd3a3;
+  border-color: rgba(var(--warn-rgb), 0.75);
+  color: var(--or);
 }
 .stat.warn b {
   color: var(--or);
@@ -658,18 +693,18 @@ button:focus-visible {
   justify-content: center;
   min-height: 60px;
   padding: 6px 0;
-  border: 1px solid rgba(125, 249, 255, 0.15);
-  border-radius: 4px;
+  border: 1px solid rgba(var(--a-rgb), 0.15);
+  border-radius: var(--r);
   background: transparent;
   font-size: 12px;
   color: var(--cy-soft);
   cursor: pointer;
 }
 .type-cell:active {
-  background: rgba(125, 249, 255, 0.15);
+  background: rgba(var(--a-rgb), 0.15);
 }
 .type-cell b {
-  font-family: Orbitron, sans-serif;
+  font-family: var(--font-display);
   font-size: 22px;
   color: var(--text);
 }
@@ -686,7 +721,7 @@ button:focus-visible {
   align-items: center;
   padding: 0;
   border: 0;
-  border-bottom: 1px solid rgba(125, 249, 255, 0.15);
+  border-bottom: 1px solid rgba(var(--a-rgb), 0.15);
   background: none;
   color: var(--text);
   font-size: 15px;
@@ -696,7 +731,7 @@ button:focus-visible {
   border-bottom: 0;
 }
 .stars {
-  color: #ffd66b;
+  color: var(--star);
   letter-spacing: 1px;
 }
 .stars.big {
@@ -706,7 +741,7 @@ button:focus-visible {
 .sample-tools {
   margin-top: 10px;
   padding-top: 14px;
-  border-top: 1px dashed rgba(125, 249, 255, 0.25);
+  border-top: 1px dashed rgba(var(--a-rgb), 0.25);
 }
 .sample-row {
   display: flex;
@@ -741,9 +776,9 @@ button:focus-visible {
   display: flex;
   align-items: center;
   padding-left: 18px;
-  border: 1px dashed rgba(125, 249, 255, 0.5);
-  border-radius: 4px;
-  background: rgba(125, 249, 255, 0.08);
+  border: 1px dashed rgba(var(--a-rgb), 0.5);
+  border-radius: var(--r);
+  background: rgba(var(--a-rgb), 0.08);
   color: var(--cy-soft);
   font-size: 14px;
   font-weight: 700;
@@ -756,24 +791,24 @@ button:focus-visible {
 /* カードの背景を不透明にして、下の帯が透けないようにします */
 .card.swipeable,
 .todo-row.swipeable {
-  background-color: #071b24;
+  background-color: var(--surface);
 }
 .swipe-under.ready {
   border-style: solid;
-  background: rgba(125, 249, 255, 0.25);
+  background: rgba(var(--a-rgb), 0.25);
   color: var(--text);
 }
 .swipe-under.done-under.ready {
-  border-color: #6dffb0;
-  background: rgba(109, 255, 176, 0.2);
+  border-color: var(--ok);
+  background: rgba(var(--ok-rgb), 0.2);
 }
 .today-badge {
   display: inline-block;
   margin-right: 8px;
   padding: 1px 7px;
-  border: 1px solid #6dffb0;
+  border: 1px solid var(--ok);
   border-radius: 999px;
-  color: #6dffb0;
+  color: var(--ok);
   font-size: 11px;
   font-weight: 700;
 }
@@ -784,7 +819,7 @@ button:focus-visible {
   color: var(--cy);
   font-size: 12px;
   letter-spacing: 3px;
-  text-shadow: 0 0 8px var(--cy);
+  text-shadow: 0 0 8px rgba(var(--a-rgb), var(--glow));
 }
 
 /* ===== 完了の演出 ===== */
@@ -796,7 +831,7 @@ button:focus-visible {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(2, 10, 16, 0.8);
+  background: rgba(var(--bg-rgb), 0.8);
   animation: fade-in 0.15s ease;
 }
 .burst-card {
@@ -804,10 +839,10 @@ button:focus-visible {
   width: 100%;
   max-width: 340px;
   padding: 46px 24px 30px;
-  border: 1px solid #6dffb0;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(109, 255, 176, 0.22), rgba(92, 225, 255, 0.08));
-  box-shadow: 0 0 60px rgba(109, 255, 176, 0.45);
+  border: 1px solid var(--ok);
+  border-radius: var(--r-lg);
+  background: linear-gradient(135deg, rgba(var(--ok-rgb), 0.22), rgba(var(--a-rgb), 0.08)), var(--surface);
+  box-shadow: 0 0 60px rgba(var(--ok-rgb), calc(0.45 * var(--glow))), 0 10px 30px rgba(0, 0, 0, 0.25);
   text-align: center;
   animation: burst-pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
@@ -815,13 +850,13 @@ button:focus-visible {
   display: inline-block;
   margin-bottom: 16px;
   padding: 4px 22px;
-  border: 3px solid #6dffb0;
-  border-radius: 6px;
-  color: #6dffb0;
+  border: 3px solid var(--ok);
+  border-radius: var(--r);
+  color: var(--ok);
   font-size: 34px;
   font-weight: 900;
   letter-spacing: 6px;
-  text-shadow: 0 0 16px rgba(109, 255, 176, 0.8);
+  text-shadow: 0 0 16px rgba(var(--ok-rgb), calc(0.8 * var(--glow)));
   transform: rotate(-8deg);
   animation: stamp 0.5s 0.15s both cubic-bezier(0.2, 1.6, 0.4, 1);
 }
@@ -869,9 +904,9 @@ button:focus-visible {
   max-width: 440px;
   padding: 10px 12px 10px 16px;
   border: 1px solid var(--cy);
-  border-radius: 6px;
-  background: #06222d;
-  box-shadow: 0 0 24px rgba(125, 249, 255, 0.35);
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: 0 0 24px rgba(var(--a-rgb), calc(0.35 * var(--glow)));
   color: var(--text);
   font-size: 13px;
   transform: translateX(-50%);
@@ -882,14 +917,14 @@ button:focus-visible {
 }
 .toast.error-toast {
   border-color: var(--or);
-  color: #ffd3a3;
+  color: var(--or);
 }
 .toast-undo {
   flex: none;
   min-height: 36px;
   padding: 0 12px;
   border: 1px solid var(--cy);
-  border-radius: 4px;
+  border-radius: var(--r);
   background: transparent;
   color: var(--cy);
   font-size: 13px;
@@ -917,13 +952,13 @@ button:focus-visible {
 .todo-progress .gauge {
   display: block;
   height: 4px;
-  background: rgba(109, 255, 176, 0.15);
+  background: rgba(var(--ok-rgb), 0.15);
 }
 .todo-progress .gauge span {
   display: block;
   height: 4px;
-  background: #6dffb0;
-  box-shadow: 0 0 8px #6dffb0;
+  background: var(--ok);
+  box-shadow: 0 0 8px rgba(var(--ok-rgb), var(--glow));
   transition: width 0.4s ease;
 }
 .carry {
@@ -938,8 +973,8 @@ button:focus-visible {
   gap: 10px;
   padding: 12px 14px;
   border: 1px solid var(--line);
-  border-radius: 4px;
-  background: linear-gradient(135deg, rgba(92, 225, 255, 0.16), rgba(92, 225, 255, 0.04));
+  border-radius: var(--r);
+  background: linear-gradient(135deg, rgba(var(--a-rgb), 0.16), rgba(var(--a-rgb), 0.04));
   cursor: pointer;
 }
 .todo-row.done {
@@ -958,13 +993,13 @@ button:focus-visible {
   width: 100%;
   height: 44px;
   font-size: 15px;
-  border: 1px solid #6dffb0;
-  background: rgba(109, 255, 176, 0.18);
-  color: #c9ffe2;
+  border: 1px solid var(--ok);
+  background: rgba(var(--ok-rgb), 0.18);
+  color: var(--text);
   font-weight: 700;
 }
 .btn.done-btn.undo {
-  border-color: rgba(125, 249, 255, 0.3);
+  border-color: rgba(var(--a-rgb), 0.3);
   background: transparent;
   color: var(--cy-soft);
   font-weight: 400;
@@ -1025,10 +1060,10 @@ button:focus-visible {
   left: 50%;
   top: 62%;
   height: 120px;
-  border: 1px solid rgba(125, 249, 255, 0.35);
+  border: 1px solid rgba(var(--a-rgb), 0.35);
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(125, 249, 255, 0.12), transparent);
-  box-shadow: 0 0 40px rgba(125, 249, 255, 0.2), inset 0 0 30px rgba(125, 249, 255, 0.15);
+  background: radial-gradient(closest-side, rgba(var(--a-rgb), 0.12), transparent);
+  box-shadow: 0 0 40px rgba(var(--a-rgb), calc(0.2 * var(--glow))), inset 0 0 30px rgba(var(--a-rgb), calc(0.15 * var(--glow)));
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
@@ -1047,9 +1082,9 @@ button:focus-visible {
   min-height: 210px;
   padding: 16px 14px;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  background: linear-gradient(160deg, #0a303e, #04161e);
-  box-shadow: 0 0 18px rgba(92, 225, 255, 0.2);
+  border-radius: var(--r-lg);
+  background: linear-gradient(160deg, var(--surface2), var(--surface));
+  box-shadow: 0 0 18px rgba(var(--a-rgb), calc(0.2 * var(--glow)));
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .ring-card .row {
@@ -1069,7 +1104,7 @@ button:focus-visible {
   margin-top: auto;
   font-size: 12px;
   line-height: 1.5;
-  color: #cff8ff;
+  color: var(--text2);
 }
 .ring-due {
   font-size: 12px;
@@ -1081,7 +1116,7 @@ button:focus-visible {
 /* 選んでいるタスク */
 .ring-card.sel .ring-inner {
   border: 2px solid var(--cy);
-  box-shadow: 0 0 34px rgba(125, 249, 255, 0.65), inset 0 0 22px rgba(125, 249, 255, 0.15);
+  box-shadow: 0 0 34px rgba(var(--a-rgb), calc(0.65 * var(--glow))), inset 0 0 22px rgba(var(--a-rgb), calc(0.15 * var(--glow)));
 }
 .ring-sel-label {
   position: absolute;
@@ -1090,8 +1125,8 @@ button:focus-visible {
   padding: 1px 10px;
   border-radius: 999px;
   background: var(--cy);
-  color: #021018;
-  font-family: Orbitron, sans-serif;
+  color: var(--on-a);
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 2px;
@@ -1104,8 +1139,8 @@ button:focus-visible {
 @keyframes fly-up {
   40% {
     transform: translateY(-30px) scale(1.05);
-    border-color: #6dffb0;
-    box-shadow: 0 0 40px rgba(109, 255, 176, 0.8);
+    border-color: var(--ok);
+    box-shadow: 0 0 40px rgba(var(--ok-rgb), calc(0.8 * var(--glow)));
   }
   100% {
     transform: translateY(-260px) scale(0.6);
@@ -1180,7 +1215,7 @@ button:focus-visible {
   justify-content: space-between;
   margin: 6px 0 0;
   padding-bottom: 6px;
-  border-bottom: 1px solid rgba(125, 249, 255, 0.25);
+  border-bottom: 1px solid rgba(var(--a-rgb), 0.25);
   font-size: 14px;
   color: var(--cy);
 }
@@ -1190,7 +1225,7 @@ button:focus-visible {
 }
 .group-head.warn {
   color: var(--or);
-  border-color: rgba(255, 159, 67, 0.4);
+  border-color: rgba(var(--warn-rgb), 0.4);
 }
 
 /* ESストック */
@@ -1208,7 +1243,7 @@ button:focus-visible {
   -webkit-box-orient: vertical;
   font-size: 13px;
   line-height: 1.7;
-  color: #cff8ff;
+  color: var(--text2);
   white-space: pre-wrap;
 }
 .copy {
@@ -1257,14 +1292,14 @@ button:focus-visible {
   font-size: 11px;
   color: var(--muted);
 }
-.cal-w.sun { color: #ff8a8a; }
-.cal-w.sat { color: #8ab8ff; }
+.cal-w.sun { color: var(--sun); }
+.cal-w.sat { color: var(--sat); }
 .cal-day {
   position: relative;
   aspect-ratio: 1;
   min-height: 40px;
-  border: 1px solid rgba(125, 249, 255, 0.12);
-  border-radius: 4px;
+  border: 1px solid rgba(var(--a-rgb), 0.12);
+  border-radius: var(--r);
   background: transparent;
   color: var(--cy-soft);
   font-size: 13px;
@@ -1276,8 +1311,8 @@ button:focus-visible {
   font-weight: 700;
 }
 .cal-day.picked {
-  background: rgba(125, 249, 255, 0.22);
-  box-shadow: 0 0 12px rgba(92, 225, 255, 0.35);
+  background: rgba(var(--a-rgb), 0.22);
+  box-shadow: 0 0 12px rgba(var(--a-rgb), calc(0.35 * var(--glow)));
   color: var(--text);
 }
 .cal-num {
@@ -1294,7 +1329,7 @@ button:focus-visible {
   padding: 0 4px;
   border-radius: 9px;
   background: var(--cy);
-  color: #04161e;
+  color: var(--on-a);
   font-size: 11px;
   font-weight: 700;
   line-height: 18px;
@@ -1317,7 +1352,7 @@ button:focus-visible {
   align-items: center;
   gap: 8px;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(125, 249, 255, 0.15);
+  border-bottom: 1px solid rgba(var(--a-rgb), 0.15);
 }
 .carry-name {
   flex: 1;
@@ -1329,4 +1364,369 @@ button:focus-visible {
   display: block;
   font-weight: 400;
   color: var(--muted);
+}
+
+/* ===== ログイン画面：デザインと色を選ぶ ===== */
+.theme-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cy);
+  text-align: left;
+  cursor: pointer;
+}
+.theme-toggle > span:first-child {
+  display: flex;
+  flex-direction: column;
+}
+.theme-toggle-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+.design-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.design-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 1px solid rgba(var(--a-rgb), 0.3);
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.design-opt b {
+  font-size: 16px;
+}
+.design-opt small {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.design-opt.on,
+.palette-opt.on {
+  border-color: var(--cy);
+  background: rgba(var(--a-rgb), 0.18);
+  box-shadow: 0 0 12px rgba(var(--a-rgb), calc(0.35 * var(--glow)));
+}
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.palette-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 64px;
+  padding: 8px 2px;
+  border: 1px solid rgba(var(--a-rgb), 0.2);
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.palette-opt small {
+  font-size: 10px;
+  line-height: 1.3;
+  text-align: center;
+}
+.swatch {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  width: 36px;
+  height: 26px;
+  padding: 4px;
+  border: 2px solid;
+  border-radius: 6px;
+}
+.swatch i {
+  flex: 1;
+  height: 100%;
+  border-radius: 2px;
+}
+.swatch i + i {
+  height: 60%;
+}
+.theme-note {
+  margin: 0;
+  font-size: 12px;
+}
+
+/* ===== 進捗率・チェックリスト・メモ ===== */
+.progress-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+.pbar {
+  flex: 1;
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(var(--ok-rgb), 0.16);
+  overflow: hidden;
+}
+.pbar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ok);
+  box-shadow: 0 0 8px rgba(var(--ok-rgb), calc(0.8 * var(--glow)));
+  transition: width 0.3s ease;
+}
+.pmeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  font-size: 11px;
+  color: var(--muted);
+}
+.pmeta b {
+  min-width: 34px;
+  text-align: right;
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--ok);
+}
+.ring-progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ring-progress b {
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--ok);
+}
+.todo-text .progress-line {
+  margin-top: 6px;
+}
+.flow-info .progress-line {
+  margin: 2px 0 4px;
+}
+
+/* 編集画面のタブ */
+.seg.editor-tabs button {
+  height: 40px;
+  font-size: 14px;
+}
+.seg.five {
+  grid-template-columns: repeat(5, 1fr);
+}
+.seg button:disabled {
+  opacity: 0.4;
+}
+.percent-big {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--ok);
+}
+.percent-range {
+  width: 100%;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: var(--ok);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.percent-range::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--ok) var(--p), rgba(var(--ok-rgb), 0.18) var(--p));
+}
+.percent-range::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--ok) var(--p), rgba(var(--ok-rgb), 0.18) var(--p));
+}
+.percent-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 26px;
+  height: 26px;
+  margin-top: -9px;
+  border: 2px solid var(--ok);
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 0 10px rgba(var(--ok-rgb), calc(0.6 * var(--glow)));
+}
+.percent-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--ok);
+  border-radius: 50%;
+  background: var(--surface);
+}
+.percent-range:disabled {
+  opacity: 0.5;
+}
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.checklist li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.check-box {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid rgba(var(--a-rgb), 0.6);
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--on-a);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.checklist li.done .check-box {
+  border-color: var(--ok);
+  background: var(--ok);
+}
+.check-text {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  font-size: 15px;
+}
+.checklist li.done .check-text {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.check-add {
+  display: flex;
+  gap: 8px;
+}
+.check-add input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  font-size: 15px;
+}
+.check-add .btn {
+  height: 44px;
+}
+
+/* ===== チェックリスト（いくつでも作れる） ===== */
+.cl-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: rgba(var(--a-rgb), 0.04);
+}
+.cl-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cl-icon {
+  flex: none;
+  color: var(--cy);
+  font-size: 16px;
+}
+.cl-head .cl-title {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 6px;
+  border-color: transparent;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 700;
+}
+.cl-head .cl-title:focus {
+  border-color: rgba(var(--a-rgb), 0.5);
+  background: rgba(var(--a-rgb), 0.08);
+}
+.cl-head .btn.small {
+  height: 32px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+.cl-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cl-progress b {
+  min-width: 36px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--ok);
+}
+.cl-empty {
+  margin: 0;
+}
+.cl-add {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cl-add textarea {
+  min-height: 64px;
+  font-size: 15px;
+}
+.cl-add-actions {
+  display: flex;
+  gap: 8px;
+}
+.cl-add-actions .btn {
+  flex: none;
+  min-width: 72px;
+}
+.cl-add-open {
+  align-self: flex-start;
+}
+.cl-new {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.btn.cl-create {
+  flex: none;
+  width: 100%;
+  height: 44px;
+  border-style: dashed;
 }

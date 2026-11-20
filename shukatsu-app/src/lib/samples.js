@@ -40,6 +40,28 @@ const ES = [
   { title: '入社後にやりたいこと', company: 'そらテック', char_limit: 200, body: '' },
 ]
 
+// いくつかのタスクに、進捗率・メモ・チェックリストの例を付けます
+const id = () => Math.random().toString(36).slice(2, 10)
+const c = (text, done = false) => ({ id: id(), text, done })
+const list = (title, items) => ({ id: id(), title, items })
+const EXTRA = {
+  あおば商事: () => ({
+    percent: 67,
+    memo: '志望動機は「人と人をつなぐ」で書く。字数400字。',
+    checklist: [list('ESの準備', [c('自己分析を見直す', true), c('志望動機を書く', true), c('先輩に読んでもらう')])],
+  }),
+  ひかり銀行: () => ({
+    percent: 50,
+    memo: '面接官は人事の方2名の予定。逆質問を3つ用意する。',
+    checklist: [
+      list('面接の準備', [c('企業研究ノートを読む', true), c('逆質問を考える'), c('志望動機を声に出して練習')]),
+      list('当日の確認', [c('カメラと音声の確認', true), c('服装の準備'), c('URLを開いておく', true)]),
+    ],
+  }),
+  そらテック: () => ({ percent: 30, memo: '結果は1週間以内にメールで届く予定。' }),
+  ほしの電機: () => ({ percent: 10, checklist: [list('最終面接の準備', [c('研究内容を1分で話す練習'), c('志望理由を見直す')])] }),
+}
+
 export const sampleTasks = () =>
   TASKS.map(([name, role, type, event, offset, priority, done]) => ({
     name,
@@ -49,6 +71,7 @@ export const sampleTasks = () =>
     due: isoFromToday(offset),
     priority,
     done,
+    ...(EXTRA[name]?.() || {}),
   }))
 
 export const sampleEs = () => ES.map((e) => ({ ...e }))

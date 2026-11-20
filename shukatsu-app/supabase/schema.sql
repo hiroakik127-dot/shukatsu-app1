@@ -27,6 +27,14 @@ alter table public.tasks
 alter table public.tasks
   add column if not exists progress text not null default 'todo' check (progress in ('todo', 'doing'));
 
+-- 進捗率（0〜100%）・メモ・チェックリスト
+alter table public.tasks
+  add column if not exists percent smallint not null default 0 check (percent between 0 and 100);
+alter table public.tasks
+  add column if not exists memo text not null default '';
+alter table public.tasks
+  add column if not exists checklist jsonb not null default '[]'::jsonb; -- [{ "id", "title", "items": [{ "id", "text", "done" }] }]（いくつでも作れます）
+
 -- タスクの種類（ES・面接・結果待ち・説明会・GD・Webテスト・インターン・選コミュ）
 alter table public.tasks drop constraint if exists tasks_type_check;
 alter table public.tasks add constraint tasks_type_check

@@ -1,6 +1,29 @@
 import { TYPE_LABEL, URGENT_DAYS, starText } from '../lib/constants'
 import { daysLeft, formatDue, leftText, todayISO } from '../lib/dates'
 import { useMultiTap, useSwipeTap } from '../lib/gestures'
+import { checkCount, percentOf } from '../lib/progress'
+
+// 進捗率のバーと、チェックリスト・メモの印（カードの下に出します）
+export function ProgressLine({ item }) {
+  const p = percentOf(item)
+  const c = checkCount(item)
+  return (
+    <span className="progress-line">
+      <span className="pbar" role="progressbar" aria-valuenow={p} aria-valuemin={0} aria-valuemax={100} aria-label="進捗率">
+        <span style={{ width: `${p}%` }} />
+      </span>
+      <span className="pmeta">
+        {c.total > 0 && (
+          <span aria-label={`チェックリスト ${c.done}/${c.total}`}>
+            ☑ {c.done}/{c.total}
+          </span>
+        )}
+        {item.memo && <span aria-label="メモあり">✎</span>}
+        <b>{p}%</b>
+      </span>
+    </span>
+  )
+}
 
 // ボード・締切で使うタスクのカードです。
 // ・1回タップ：編集
@@ -12,7 +35,6 @@ export default function TaskCard({ item, onOpen, onTriple, onSwipeRight }) {
 
   const n = daysLeft(item.due)
   const urgent = !item.done && n !== null && n <= URGENT_DAYS
-  const gauge = n === null ? 0 : Math.max(8, Math.min(100, 100 - Math.max(n, 0) * 6))
   const inToday = item.todo_date === todayISO()
   const cls = ['card', 'swipeable', urgent && 'urgent', item.done && 'done'].filter(Boolean).join(' ')
 
@@ -53,11 +75,7 @@ export default function TaskCard({ item, onOpen, onTriple, onSwipeRight }) {
         <span className="event">
           {item.event || '内容なし'} ・ {formatDue(item.due)}
         </span>
-        {!item.done && (
-          <span className="gauge">
-            <span style={{ width: `${gauge}%` }} />
-          </span>
-        )}
+        {!item.done && <ProgressLine item={item} />}
         {taps > 0 && (
           <span className="tap-dots" aria-hidden="true">
             {'●'.repeat(taps)}

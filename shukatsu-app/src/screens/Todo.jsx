@@ -1,6 +1,7 @@
 import { TYPE_LABEL } from '../lib/constants'
 import { byDue, daysLeft, formatDue, leftText, todayISO } from '../lib/dates'
 import { useSwipeTap } from '../lib/gestures'
+import { ProgressLine } from '../components/TaskCard'
 
 function TodoRow({ item, actions, openTask }) {
   const { dx, ready, handlers } = useSwipeTap({
@@ -28,6 +29,7 @@ function TodoRow({ item, actions, openTask }) {
               {item.due && ` ・ ${formatDue(item.due)}`}
               {!item.done && n !== null && <b className={n <= 1 ? 'warn' : ''}> {leftText(n)}</b>}
             </div>
+            {!item.done && <ProgressLine item={item} />}
           </div>
           <button
             className="icon-btn small"

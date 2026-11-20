@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { TYPE_LABEL, starText } from '../lib/constants'
 import { byDue, daysLeft, formatDue, leftText, todayISO } from '../lib/dates'
+import { percentOf } from '../lib/progress'
+import { ProgressLine } from '../components/TaskCard'
 
 const CARD_W = 168 // カードの幅（styles.css の .ring-card と合わせる）
 const PX_PER_STEP = 110 // 横にこれだけ動かすと、となりのタスクに移ります（px）
@@ -279,6 +281,12 @@ export default function Flow({ tasks, actions, openTask }) {
                 {t.priority && <div className="stars">{starText(t.priority)}</div>}
                 <div className="ring-event">{t.event || '内容なし'}</div>
                 <div className="ring-due">{formatDue(t.due)}</div>
+                <div className="ring-progress">
+                  <span className="pbar">
+                    <span style={{ width: `${percentOf(t)}%` }} />
+                  </span>
+                  <b>{percentOf(t)}%</b>
+                </div>
                 {t.todo_date === today && <span className="today-badge">今日</span>}
                 {tapInfo.idx === i && tapInfo.n > 0 && (
                   <span className="tap-dots">
@@ -304,6 +312,7 @@ export default function Flow({ tasks, actions, openTask }) {
           {TYPE_LABEL[current.type]} ・ {current.event || '内容なし'} ・ {formatDue(current.due)}{' '}
           {leftText(daysLeft(current.due))}
         </div>
+        <ProgressLine item={current} />
         <div className="flow-actions">
           <button className="btn ghost arrow" aria-label="前のタスク" onClick={() => move(-1)}>
             ←
