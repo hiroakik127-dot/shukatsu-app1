@@ -27,12 +27,31 @@ export default function Board({ tasks, openTask, actions, initialFilter = 'all' 
 
   // ホームから種類を指定して開いたとき、選ばれた絞り込みが見えるように横へスクロールします
   const chipsRef = useRef(null)
+  // （スマホでは画面の準備や文字の読み込みが遅れることがあるので、少し時間をおいて何度か合わせ直します）
   useEffect(() => {
+    if (initialFilter === 'all') return
     const box = chipsRef.current
-    const on = box?.querySelector('.chip.on')
-    if (!box || !on) return
-    const gap = on.getBoundingClientRect().left - box.getBoundingClientRect().left
-    box.scrollLeft += gap - (box.clientWidth - on.offsetWidth) / 2
+    if (!box) return
+    let touched = false
+    const stop = () => (touched = true) // 自分で横にスクロールし始めたら、合わせ直すのをやめます
+    const center = () => {
+      const on = box.querySelector('.chip.on')
+      if (touched || !on) return
+      const gap = on.getBoundingClientRect().left - box.getBoundingClientRect().left
+      const left = box.scrollLeft + gap - (box.clientWidth - on.offsetWidth) / 2
+      box.scrollTo({ left: Math.max(0, left), behavior: 'auto' })
+    }
+    box.addEventListener('pointerdown', stop)
+    center()
+    const raf = requestAnimationFrame(center)
+    const timers = [120, 400, 1000].map((ms) => setTimeout(center, ms))
+    document.fonts?.ready.then(center)
+    return () => {
+      touched = true
+      cancelAnimationFrame(raf)
+      timers.forEach(clearTimeout)
+      box.removeEventListener('pointerdown', stop)
+    }
   }, [])
 
   return (
