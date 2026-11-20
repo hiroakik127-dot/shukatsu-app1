@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import TaskCard from '../components/TaskCard'
 import { TYPES } from '../lib/constants'
 import { byDue } from '../lib/dates'
@@ -25,9 +25,19 @@ export default function Board({ tasks, openTask, actions, initialFilter = 'all' 
 
   const chips = [{ key: 'all', label: 'すべて' }, ...TYPES, { key: 'done', label: '完了' }]
 
+  // ホームから種類を指定して開いたとき、選ばれた絞り込みが見えるように横へスクロールします
+  const chipsRef = useRef(null)
+  useEffect(() => {
+    const box = chipsRef.current
+    const on = box?.querySelector('.chip.on')
+    if (!box || !on) return
+    const gap = on.getBoundingClientRect().left - box.getBoundingClientRect().left
+    box.scrollLeft += gap - (box.clientWidth - on.offsetWidth) / 2
+  }, [])
+
   return (
     <>
-      <div className="chips" role="tablist" aria-label="種類で絞り込み">
+      <div className="chips" role="tablist" aria-label="種類で絞り込み" ref={chipsRef}>
         {chips.map((t) => (
           <button
             key={t.key}
