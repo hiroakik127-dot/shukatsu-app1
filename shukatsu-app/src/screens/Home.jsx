@@ -153,13 +153,13 @@ export default function Home({ tasks, es, openTask, go }) {
 
       <section className="panel block">
         <div className="eyebrow">BY TYPE</div>
-        <p className="muted">まだ終わっていないタスクの、種類ごとの件数</p>
+        <p className="muted">まだ終わっていないタスクの、種類ごとの件数（押すと一覧へ）</p>
         <div className="type-grid">
           {TYPES.map((t) => (
-            <div key={t.key} className="type-cell">
+            <button key={t.key} className="type-cell" onClick={() => go('board', t.key)}>
               <b>{active.filter((i) => i.type === t.key).length}</b>
               <span>{t.label}</span>
-            </div>
+            </button>
           ))}
         </div>
       </section>

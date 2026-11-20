@@ -647,14 +647,26 @@ button:focus-visible {
 .type-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px 6px;
+  gap: 6px;
+  margin-top: 8px;
   text-align: center;
 }
 .type-cell {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+  padding: 6px 0;
+  border: 1px solid rgba(125, 249, 255, 0.15);
+  border-radius: 4px;
+  background: transparent;
   font-size: 12px;
   color: var(--cy-soft);
+  cursor: pointer;
+}
+.type-cell:active {
+  background: rgba(125, 249, 255, 0.15);
 }
 .type-cell b {
   font-family: Orbitron, sans-serif;
@@ -989,7 +1001,8 @@ button:focus-visible {
 }
 .ring-stage {
   position: relative;
-  height: 380px;
+  /* 画面の高さに合わせて縮め、下の四角（選んでいるタスク）が見切れないようにします */
+  height: clamp(180px, calc(100dvh - 420px), 360px);
   margin: 0 -20px;
   overflow: hidden;
   perspective: 820px;
@@ -1107,6 +1120,41 @@ button:focus-visible {
 .flow-actions {
   display: flex;
   gap: 8px;
+}
+.flow-info {
+  gap: 6px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+.flow .gesture-hint {
+  margin: 0;
+}
+/* 縦が短いスマホでは、カードを少し小さくします */
+@media (max-height: 760px) {
+  .ring-inner {
+    min-height: 178px;
+    padding: 12px;
+    gap: 4px;
+  }
+  .ring-name {
+    font-size: 17px;
+  }
+}
+/* iPhone SE などとても短い画面：カードをさらに小さく、内容をしぼります */
+@media (max-height: 620px) {
+  .ring-inner {
+    min-height: 140px;
+    padding: 10px 12px;
+  }
+  .ring-name {
+    font-size: 16px;
+  }
+  .ring-event {
+    display: none;
+  }
+  .flow-info .muted {
+    font-size: 12px;
+  }
 }
 .flow-actions .btn.ghost {
   flex: none;

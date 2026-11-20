@@ -124,7 +124,10 @@ function Shell({ session }) {
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
-  const go = (key) => {
+  // ボードを開くときの絞り込み（ホームの BY TYPE から種類を指定して開けます）
+  const [boardFilter, setBoardFilter] = useState('all')
+  const go = (key, filter = 'all') => {
+    setBoardFilter(filter)
     window.location.hash = key
     setScreen(key)
     window.scrollTo(0, 0)
@@ -223,7 +226,7 @@ function Shell({ session }) {
 
       {screen === 'home' && <Home {...props} es={es} go={go} />}
       {screen === 'todo' && <Todo {...props} go={go} />}
-      {screen === 'board' && <Board {...props} />}
+      {screen === 'board' && <Board key={boardFilter} {...props} initialFilter={boardFilter} />}
       {screen === 'flow' && <Flow {...props} />}
       {screen === 'deadline' && <Deadlines {...props} />}
       {screen === 'es' && <EsStock es={es} />}

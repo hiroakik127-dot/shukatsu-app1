@@ -4,8 +4,8 @@ import { TYPES } from '../lib/constants'
 import { byDue } from '../lib/dates'
 
 // 選考ボード：タスクを種類で絞り込んで一覧表示します。
-export default function Board({ tasks, openTask, actions }) {
-  const [filter, setFilter] = useState('all')
+export default function Board({ tasks, openTask, actions, initialFilter = 'all' }) {
+  const [filter, setFilter] = useState(initialFilter)
   const { items, loading } = tasks
 
   const active = items.filter((i) => !i.done)

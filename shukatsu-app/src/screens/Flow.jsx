@@ -39,19 +39,41 @@ export default function Flow({ tasks, actions, openTask }) {
     setPos(v)
   }
 
-  const animateTo = (target) => {
+  // target の位置まで、はじめ速く・最後ゆっくり止まるように動かします
+  const animateTo = (target, duration) => {
     cancelAnimationFrame(anim.current)
     const from = posRef.current
+    const dist = Math.abs(target - from)
+    if (dist < 0.001) return setP(target)
+    const dur = duration ?? Math.min(720, 300 + dist * 160)
     const t0 = performance.now()
     const tick = (now) => {
-      const k = Math.min(1, (now - t0) / 320)
-      setP(from + (target - from) * (1 - (1 - k) ** 3))
+      const k = Math.min(1, (now - t0) / dur)
+      setP(from + (target - from) * (1 - (1 - k) ** 4))
       if (k < 1) anim.current = requestAnimationFrame(tick)
     }
     anim.current = requestAnimationFrame(tick)
   }
 
-  useEffect(() => () => cancelAnimationFrame(anim.current), [])
+  // 指の動きは1フレームに1回だけ画面に反映して、カクつきを減らします
+  const frame = useRef({ id: 0, v: 0 })
+  const setPSmooth = (v) => {
+    posRef.current = v
+    frame.current.v = v
+    if (frame.current.id) return
+    frame.current.id = requestAnimationFrame(() => {
+      frame.current.id = 0
+      setPos(frame.current.v)
+    })
+  }
+
+  useEffect(
+    () => () => {
+      cancelAnimationFrame(anim.current)
+      cancelAnimationFrame(frame.current.id)
+    },
+    [],
+  )
   useEffect(() => () => clearTimeout(taps.current.t), [])
 
   // タスクの数が変わったら（完了したときなど）、同じ位置のタスクを選んだままにします
@@ -120,6 +142,7 @@ export default function Flow({ tasks, actions, openTask }) {
       start: posRef.current,
       idx: card ? Number(card.dataset.idx) : null,
       mode: '?',
+      samples: [{ t: performance.now(), p: posRef.current }],
     }
     e.currentTarget.setPointerCapture(e.pointerId)
   }
@@ -133,7 +156,13 @@ export default function Flow({ tasks, actions, openTask }) {
       if (Math.abs(mx) > MOVE && Math.abs(mx) >= Math.abs(my)) d.mode = 'h'
       else if (Math.abs(my) > MOVE) d.mode = 'v'
     }
-    if (d.mode === 'h') setP(d.start - mx / PX_PER_STEP)
+    if (d.mode === 'h') {
+      const p = d.start - mx / PX_PER_STEP
+      setPSmooth(p)
+      const now = performance.now()
+      d.samples.push({ t: now, p })
+      while (d.samples.length > 2 && now - d.samples[0].t > 100) d.samples.shift()
+    }
     if (d.mode === 'v') setLift(Math.min(0, my))
   }
 
@@ -142,7 +171,15 @@ export default function Flow({ tasks, actions, openTask }) {
     if (!d || d.id !== e.pointerId) return
     drag.current = null
     setLift(0)
-    if (d.mode === 'h' || cancelled) return animateTo(Math.round(posRef.current))
+    if (cancelled) return animateTo(Math.round(posRef.current))
+    if (d.mode === 'h') {
+      // 指を離したときの速さに合わせて、少し惰性で回してから止めます
+      const a = d.samples[0]
+      const b = d.samples[d.samples.length - 1]
+      const v = b.t > a.t && performance.now() - b.t < 80 ? (b.p - a.p) / (b.t - a.t) : 0 // 1ミリ秒あたりの移動量
+      const throwBy = Math.max(-3, Math.min(3, v * 180))
+      return animateTo(Math.round(posRef.current + throwBy))
+    }
     const my = e.clientY - d.y
     if (d.mode === 'v') {
       if (my < -UP) sendUp()
@@ -155,18 +192,23 @@ export default function Flow({ tasks, actions, openTask }) {
   useEffect(() => {
     const el = stageRef.current
     if (!el) return
-    let last = 0
+    // 回している間は連続して動かし、止めたら近いタスクにぴたっと合わせます
+    let snap = 0
     const onWheel = (e) => {
       const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
-      if (Math.abs(d) < 4) return
+      if (!d) return
       e.preventDefault()
-      const now = Date.now()
-      if (now - last < 200) return
-      last = now
-      animateTo(Math.round(posRef.current) + (d > 0 ? 1 : -1))
+      cancelAnimationFrame(anim.current)
+      const px = e.deltaMode === 1 ? d * 40 : d // 行単位のホイールはピクセルに直します
+      setPSmooth(posRef.current + Math.max(-0.6, Math.min(0.6, px / 240)))
+      clearTimeout(snap)
+      snap = setTimeout(() => animateTo(Math.round(posRef.current)), 140)
     }
     el.addEventListener('wheel', onWheel, { passive: false })
-    return () => el.removeEventListener('wheel', onWheel)
+    return () => {
+      clearTimeout(snap)
+      el.removeEventListener('wheel', onWheel)
+    }
   }, [n > 0])
 
   const onKey = (e) => {
@@ -191,7 +233,7 @@ export default function Flow({ tasks, actions, openTask }) {
 
   return (
     <main className="flow">
-      <p className="gesture-hint">左右にスワイプで選ぶ ・ 上にスワイプで今日のToDoへ ・ 3回タップで完了</p>
+      <p className="gesture-hint">左右で選ぶ ・ 上スワイプで今日のToDoへ ・ 3回タップで完了</p>
 
       <div
         ref={stageRef}
@@ -270,7 +312,7 @@ export default function Flow({ tasks, actions, openTask }) {
             編集
           </button>
           <button className="btn primary" onClick={sendUp} disabled={inToday}>
-            {inToday ? 'ToDoに追加済み' : '今日のToDoへ ↑'}
+            {inToday ? 'ToDo追加済み' : 'ToDoへ ↑'}
           </button>
           <button className="btn ghost arrow" aria-label="次のタスク" onClick={() => move(1)}>
             →
