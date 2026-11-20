@@ -305,14 +305,17 @@ export default function Flow({ tasks, actions, openTask }) {
           <span className="eyebrow">
             SELECTED {sel + 1} / {n}
           </span>
+          {/* 進捗は同じ行に並べて、四角の高さをおさえます */}
+          <ProgressLine item={current} />
+        </div>
+        <div className="next-name">
+          {current.name}
           {inToday && <span className="today-badge">今日のToDo</span>}
         </div>
-        <div className="next-name">{current.name}</div>
-        <div className="muted">
+        <div className="muted flow-sub">
           {TYPE_LABEL[current.type]} ・ {current.event || '内容なし'} ・ {formatDue(current.due)}{' '}
           {leftText(daysLeft(current.due))}
         </div>
-        <ProgressLine item={current} />
         <div className="flow-actions">
           <button className="btn ghost arrow" aria-label="前のタスク" onClick={() => move(-1)}>
             ←

@@ -1037,7 +1037,8 @@ button:focus-visible {
 .ring-stage {
   position: relative;
   /* 画面の高さに合わせて縮め、下の四角（選んでいるタスク）が見切れないようにします */
-  height: clamp(180px, calc(100dvh - 420px), 360px);
+  /* （iPhoneの下のホームバーの分も引きます） */
+  height: clamp(170px, calc(100dvh - 440px - env(safe-area-inset-top) - env(safe-area-inset-bottom)), 360px);
   margin: 0 -20px;
   overflow: hidden;
   perspective: 820px;
@@ -1729,4 +1730,23 @@ button:focus-visible {
   width: 100%;
   height: 44px;
   border-style: dashed;
+}
+
+/* フローの下の四角：進捗を SELECTED の行に並べ、説明は1行にします */
+.flow-info .row {
+  gap: 12px;
+}
+.flow-info .row .progress-line {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+.flow-info .next-name .today-badge {
+  margin: 0 0 0 8px;
+  vertical-align: middle;
+}
+.flow-sub {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
