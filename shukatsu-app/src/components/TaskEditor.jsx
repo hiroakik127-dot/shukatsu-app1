@@ -1,0 +1,157 @@
+import { friendlyError } from '../store'
+import { useState } from 'react'
+import Sheet from './Sheet'
+import { TYPES } from '../lib/constants'
+
+const emptyForm = {
+  name: '',
+  role: '',
+  type: 'es',
+  event: '',
+  due: '',
+  priority: null,
+  done: false,
+}
+
+function StarInput({ value, onChange }) {
+  return (
+    <div className="field">
+      <span>志望度{!value && '（未設定）'}</span>
+      <div className="stars-input" role="radiogroup" aria-label="志望度">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            type="button"
+            key={n}
+            role="radio"
+            aria-checked={value === n}
+            aria-label={`志望度${n}`}
+            className={value && n <= value ? 'on' : ''}
+            // 同じ星をもう一度押すと未設定に戻します
+            onClick={() => onChange(value === n ? null : n)}
+          >
+            {value && n <= value ? '★' : '☆'}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default function TaskEditor({ item, onClose, onSave, onDelete }) {
+  const [form, setForm] = useState(
+    item
+      ? {
+          name: item.name,
+          role: item.role,
+          type: item.type,
+          event: item.event,
+          due: item.due || '',
+          priority: item.priority ?? null,
+          done: Boolean(item.done),
+        }
+      : emptyForm,
+  )
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+
+  const run = async (fn) => {
+    setBusy(true)
+    setError('')
+    try {
+      await fn()
+      onClose()
+    } catch (e) {
+      setError(friendlyError(e, '保存に失敗しました'))
+      setBusy(false)
+    }
+  }
+
+  const submit = (e) => {
+    e.preventDefault()
+    if (!form.name.trim()) return
+    run(() => onSave({ ...form, name: form.name.trim(), due: form.due || null }))
+  }
+
+  const remove = () => {
+    if (!window.confirm('このタスクを削除しますか？')) return
+    run(onDelete)
+  }
+
+  return (
+    <Sheet title={item ? 'タスクを編集' : 'タスクを追加'} onClose={onClose} onSubmit={submit}>
+      <label>
+        企業名
+        <input
+          required
+          autoFocus={!item}
+          value={form.name}
+          onChange={(e) => set('name', e.target.value)}
+          placeholder="例：サンプル商事"
+        />
+      </label>
+      <label>
+        職種
+        <input value={form.role} onChange={(e) => set('role', e.target.value)} placeholder="例：総合職（営業）" />
+      </label>
+
+      <StarInput value={form.priority} onChange={(v) => set('priority', v)} />
+
+      <div className="field">
+        <span>種類</span>
+        <div className="seg">
+          {TYPES.map((t) => (
+            <button
+              type="button"
+              key={t.key}
+              className={form.type === t.key ? 'on' : ''}
+              onClick={() => set('type', t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <label>
+        内容
+        <input value={form.event} onChange={(e) => set('event', e.target.value)} placeholder="例：ES締切 23:59" />
+      </label>
+      <label>
+        日付
+        <input type="date" value={form.due} onChange={(e) => set('due', e.target.value)} />
+      </label>
+
+      {item && (
+        <div className="field">
+          <span>状態</span>
+          <div className="seg two">
+            <button type="button" className={!form.done ? 'on' : ''} onClick={() => set('done', false)}>
+              進行中
+            </button>
+            <button type="button" className={form.done ? 'on' : ''} onClick={() => set('done', true)}>
+              完了
+            </button>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+
+      <div className="sheet-actions">
+        {item && (
+          <button type="button" className="btn danger" onClick={remove} disabled={busy}>
+            削除
+          </button>
+        )}
+        <button className="btn primary" disabled={busy}>
+          {busy ? '保存中…' : '保存'}
+        </button>
+      </div>
+    </Sheet>
+  )
+}
