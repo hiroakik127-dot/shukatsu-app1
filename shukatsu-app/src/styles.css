@@ -2038,3 +2038,13 @@ button:focus-visible {
 .btn.wide {
   flex: none;
 }
+
+/* メモの画面：円の上下に少し余白をとります（縦が短い画面では控えめに） */
+.flow .ring-stage {
+  margin: 16px -20px 14px;
+}
+@media (max-height: 620px) {
+  .flow .ring-stage {
+    margin: 8px -20px 6px;
+  }
+}
