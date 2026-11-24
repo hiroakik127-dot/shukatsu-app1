@@ -76,8 +76,21 @@ export const sampleTasks = () =>
 
 export const sampleEs = () => ES.map((e) => ({ ...e }))
 
-// サンプルかどうかの見分け（企業名・設問で判定）
+// 学びのメモ（メモの画面に入ります）。最後の1つは完了したメモです
+const NOTES = [
+  ['面接は結論から話す', '一次面接で、理由から話し始めたら途中で止められた。\nまず結論を一言で言って、そのあと理由を2つまでにする。', false],
+  ['逆質問は3つ用意する', '「入社1年目の働き方」「評価のされ方」「チームの雰囲気」の3つを基本にする。\n説明会や面接で聞いたことと重ならないように、直前に見直す。', false],
+  ['説明会のメモはその日のうちに', '翌日には半分くらい忘れている。帰りの電車で、気になったことを3行でまとめる。', false],
+  ['自己PRには数字を入れる', '「定着率を上げた」より「3か月以内の退職者を2人から0人にした」のほうが伝わる。', false],
+  ['GDは役割より中身', '司会や書記を取りにいくより、論点を整理する一言のほうが評価されていた。\n時間配分の声かけも大事。', false],
+  ['前日は早く寝る', '面接の前の日に夜ふかしして、当日うまく話せなかった。準備は前日の夜9時まで。', true],
+]
+export const sampleNotes = () => NOTES.map(([title, body, done]) => ({ title, body, done, photos: [] }))
+
+// サンプルかどうかの見分け（企業名・設問・メモのタイトルで判定）
 const TASK_NAMES = new Set(TASKS.map((t) => t[0]))
 const ES_KEYS = new Set(ES.map((e) => `${e.title}|${e.company}`))
 export const isSampleTask = (t) => TASK_NAMES.has(t.name)
 export const isSampleEs = (e) => ES_KEYS.has(`${e.title}|${e.company}`)
+const NOTE_TITLES = new Set(NOTES.map((n) => n[0]))
+export const isSampleNote = (n) => NOTE_TITLES.has(n.title)

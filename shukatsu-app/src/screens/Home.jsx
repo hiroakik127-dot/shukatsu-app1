@@ -2,7 +2,7 @@ import { friendlyError } from '../store'
 import { useMemo, useState } from 'react'
 import { TYPES } from '../lib/constants'
 import { byDue, daysLeft, formatDue, formatToday, leftText, todayISO } from '../lib/dates'
-import { isSampleEs, isSampleTask, sampleEs, sampleTasks } from '../lib/samples'
+import { isSampleEs, isSampleNote, isSampleTask, sampleEs, sampleNotes, sampleTasks } from '../lib/samples'
 import { usePhotoUrls } from '../lib/photos'
 
 // メモを3つ、ランダムに選びます
@@ -33,13 +33,17 @@ function MemoItem({ note, onOpen }) {
 }
 
 // サンプルデータの追加・削除ボタン
-function SampleTools({ tasks, es }) {
+function SampleTools({ tasks, es, notes }) {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const [error, setError] = useState('')
   const sampleTaskIds = tasks.items.filter(isSampleTask).map((t) => t.id)
   const sampleEsIds = es.items.filter(isSampleEs).map((e) => e.id)
-  const hasSamples = sampleTaskIds.length + sampleEsIds.length > 0
+  const sampleNoteIds = notes.items.filter(isSampleNote).map((n) => n.id)
+  const hasSamples = sampleTaskIds.length + sampleEsIds.length + sampleNoteIds.length > 0
+  // まだ入っていない種類だけを入れます（タスクとESのサンプルが入っていても、メモだけ足せます）
+  const missing = { tasks: !sampleTaskIds.length, es: !sampleEsIds.length, notes: !sampleNoteIds.length }
+  const canAdd = missing.tasks || missing.es || missing.notes
 
   const run = async (fn, done) => {
     setBusy(true)
@@ -55,24 +59,31 @@ function SampleTools({ tasks, es }) {
     }
   }
 
-  const add = () =>
+  const add = () => {
+    const parts = []
+    if (missing.tasks) parts.push('タスク12件')
+    if (missing.es) parts.push('ES4件')
+    if (missing.notes) parts.push('メモ6件')
     run(async () => {
-      await tasks.addMany(sampleTasks())
-      await es.addMany(sampleEs())
-    }, 'サンプルを追加しました（タスク12件・ES4件）')
+      if (missing.tasks) await tasks.addMany(sampleTasks())
+      if (missing.es) await es.addMany(sampleEs())
+      if (missing.notes) await notes.addMany(sampleNotes())
+    }, `サンプルを追加しました（${parts.join('・')}）`)
+  }
 
   const remove = () => {
-    if (!window.confirm('サンプルのタスクとESを削除しますか？（自分で追加したものは消えません）')) return
+    if (!window.confirm('サンプルのタスク・ES・メモを削除しますか？（自分で追加したものは消えません）')) return
     run(async () => {
       await tasks.removeMany(sampleTaskIds)
       await es.removeMany(sampleEsIds)
+      await notes.removeMany(sampleNoteIds)
     }, 'サンプルを削除しました')
   }
 
   return (
     <section className="sample-tools">
       <div className="sample-row">
-        <button className="btn ghost small" onClick={add} disabled={busy || hasSamples}>
+        <button className="btn ghost small" onClick={add} disabled={busy || !canAdd}>
           {busy ? '処理中…' : 'サンプルデータを入れる'}
         </button>
         {hasSamples && (
@@ -220,7 +231,7 @@ export default function Home({ tasks, es, notes, openTask, openNote, go }) {
         今日のToDoを開く
       </button>
 
-      <SampleTools tasks={tasks} es={es} />
+      <SampleTools tasks={tasks} es={es} notes={notes} />
     </main>
   )
 }
