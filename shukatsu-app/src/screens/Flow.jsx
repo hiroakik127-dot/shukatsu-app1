@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { TYPE_LABEL, starText } from '../lib/constants'
-import { byDue, daysLeft, formatDue, leftText, todayISO } from '../lib/dates'
-import { percentOf } from '../lib/progress'
-import { ProgressLine } from '../components/TaskCard'
+import { todayISO } from '../lib/dates'
+import { usePhotoUrls } from '../lib/photos'
 
 const CARD_W = 168 // カードの幅（styles.css の .ring-card と合わせる）
-const PX_PER_STEP = 110 // 横にこれだけ動かすと、となりのタスクに移ります（px）
+const PX_PER_STEP = 110 // 横にこれだけ動かすと、となりのメモに移ります（px）
 const MOVE = 8 // これ以下の動きはタップとみなします（px）
 const UP = 70 // これ以上 上に動かすと、今日のToDoに入れます（px）
+const TAP_WAIT = 380 // 1回タップのあと、続けてタップされるかを待つ時間（ミリ秒）
 
 const mod = (a, n) => ((a % n) + n) % n
 // 角度を -180〜180 度にそろえます
@@ -15,24 +14,69 @@ const norm = (deg) => {
   const a = mod(deg, 360)
   return a > 180 ? a - 360 : a
 }
+const shortDate = (iso) => {
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '' : `${d.getMonth() + 1}/${d.getDate()}`
+}
+const photosOf = (n) => (Array.isArray(n.photos) ? n.photos : [])
 
-// フロー：進行中のタスクを、奥行きのある円の上に並べます。
-// ・左右にスワイプ（またはスクロール）で回して、手前のタスクを選びます
-// ・上にスワイプで、選んでいるタスクを今日のToDoへ
-// ・3回タップで、そのタスクを完了
-export default function Flow({ tasks, actions, openTask }) {
+// メモのカードの上に出す写真（1枚目）
+function Thumb({ path }) {
+  const [url] = usePhotoUrls([path])
+  return <div className="ring-photo">{url && <img src={url} alt="" draggable="false" />}</div>
+}
+
+// 完了したメモの1行（タップで開く。「戻す」で進行中に戻す）
+function DoneRow({ note, onOpen, onBack }) {
+  const photos = photosOf(note)
+  const [url] = usePhotoUrls(photos.slice(0, 1))
+  return (
+    <div className="card note-row" role="button" tabIndex={0} onClick={onOpen} onKeyDown={(e) => e.key === 'Enter' && onOpen()}>
+      {photos.length > 0 && <div className="note-row-photo">{url && <img src={url} alt="" />}</div>}
+      <div className="note-row-text">
+        <span className="row">
+          <span>MEMO{photos.length > 0 && ` ・ 📷${photos.length}`}</span>
+          <span>{shortDate(note.created_at)}</span>
+        </span>
+        <span className="name">{note.title || '（タイトルなし）'}</span>
+        <span className="note-row-body">{note.body || '本文なし'}</span>
+      </div>
+      <button
+        className="btn ghost small note-back"
+        onClick={(e) => {
+          e.stopPropagation()
+          onBack()
+        }}
+      >
+        戻す
+      </button>
+    </div>
+  )
+}
+
+// メモ：就活の中で学んだこと・忘れてはいけないことのメモを、奥行きのある円の上に並べます。
+// （締切のあるタスクとは別の、自分のためのメモです）
+// ・左右にスワイプ（またはスクロール）で回して、手前のメモを選びます
+// ・手前のメモを1回タップで開く、3回タップで完了
+// ・上にスワイプで、選んでいるメモを今日のToDoへ
+export default function Flow({ notes, actions, openNote }) {
   const today = todayISO()
-  const queue = useMemo(() => tasks.items.filter((t) => !t.done).sort(byDue), [tasks.items])
+  const [view, setView] = useState('open') // 'open'（進行中：円） | 'done'（完了：リスト）
+  const newest = (a, b) => String(b.created_at).localeCompare(String(a.created_at)) // 新しい順
+  const queue = useMemo(() => notes.items.filter((m) => !m.done).sort(newest), [notes.items])
+  const doneList = useMemo(() => notes.items.filter((m) => m.done).sort(newest), [notes.items])
+  const openCount = queue.length
   const n = queue.length
+  const isOpen = view === 'open'
 
-  const [pos, setPos] = useState(0) // 何番目のタスクが手前にあるか（回転中は小数）
+  const [pos, setPos] = useState(0) // 何番目のメモが手前にあるか（回転中は小数）
   const posRef = useRef(0)
   const anim = useRef(null)
   const drag = useRef(null)
   const taps = useRef({ idx: -1, n: 0, t: null })
   const [tapInfo, setTapInfo] = useState({ idx: -1, n: 0 })
   const [lift, setLift] = useState(0) // 上スワイプ中の持ち上がり
-  const [fly, setFly] = useState(null) // 今日のToDoへ飛んでいくタスクのID
+  const [fly, setFly] = useState(null) // 今日のToDoへ飛んでいくメモのID
   const stageRef = useRef(null)
   const prevN = useRef(n)
 
@@ -73,12 +117,19 @@ export default function Flow({ tasks, actions, openTask }) {
     () => () => {
       cancelAnimationFrame(anim.current)
       cancelAnimationFrame(frame.current.id)
+      clearTimeout(taps.current.t)
     },
     [],
   )
-  useEffect(() => () => clearTimeout(taps.current.t), [])
 
-  // タスクの数が変わったら（完了したときなど）、同じ位置のタスクを選んだままにします
+  // 未完了／完了を切り替えたら、いちばん手前（新しいメモ）から見せます
+  useEffect(() => {
+    cancelAnimationFrame(anim.current)
+    setP(0)
+    prevN.current = n
+  }, [view])
+
+  // メモの数が変わったら（完了したときなど）、同じ位置のメモを選んだままにします
   useEffect(() => {
     if (n && prevN.current && n !== prevN.current) {
       cancelAnimationFrame(anim.current)
@@ -102,7 +153,7 @@ export default function Flow({ tasks, actions, openTask }) {
   }
 
   const sendUp = () => {
-    if (!current) return
+    if (!current || !isOpen) return
     setFly(current.id)
     setTimeout(() => setFly(null), 650)
     actions.addToday(current)
@@ -110,27 +161,30 @@ export default function Flow({ tasks, actions, openTask }) {
 
   const tap = (idx) => {
     const t = taps.current
+    const wasFront = idx === sel
     if (t.idx !== idx) {
       t.idx = idx
       t.n = 0
     }
     t.n += 1
     clearTimeout(t.t)
-    if (idx !== sel) goToIdx(idx) // 奥のタスクをタップしたら、手前に持ってきます
-    if (t.n >= 3) {
-      const task = queue[idx]
+    if (!wasFront) goToIdx(idx) // 奥のメモをタップしたら、手前に持ってきます
+    if (t.n >= 3 && isOpen) {
+      const note = queue[idx]
       t.idx = -1
       t.n = 0
       setTapInfo({ idx: -1, n: 0 })
-      actions.complete(task)
+      actions.complete(note)
       return
     }
     setTapInfo({ idx, n: t.n })
     t.t = setTimeout(() => {
+      // 手前のメモを1回だけタップしたときは、メモを開きます
+      if (t.n === 1 && wasFront) openNote(queue[idx])
       t.idx = -1
       t.n = 0
       setTapInfo({ idx: -1, n: 0 })
-    }, 450)
+    }, TAP_WAIT)
   }
 
   const onDown = (e) => {
@@ -165,7 +219,7 @@ export default function Flow({ tasks, actions, openTask }) {
       d.samples.push({ t: now, p })
       while (d.samples.length > 2 && now - d.samples[0].t > 100) d.samples.shift()
     }
-    if (d.mode === 'v') setLift(Math.min(0, my))
+    if (d.mode === 'v' && isOpen) setLift(Math.min(0, my))
   }
 
   const onUp = (e, cancelled) => {
@@ -194,7 +248,7 @@ export default function Flow({ tasks, actions, openTask }) {
   useEffect(() => {
     const el = stageRef.current
     if (!el) return
-    // 回している間は連続して動かし、止めたら近いタスクにぴたっと合わせます
+    // 回している間は連続して動かし、止めたら近いメモにぴたっと合わせます
     let snap = 0
     const onWheel = (e) => {
       const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
@@ -217,31 +271,83 @@ export default function Flow({ tasks, actions, openTask }) {
     if (e.key === 'ArrowLeft') move(-1)
     else if (e.key === 'ArrowRight') move(1)
     else if (e.key === 'ArrowUp') sendUp()
-    else if (e.key === 'Enter' && current) openTask(current)
+    else if (e.key === 'Enter' && current) openNote(current)
     else return
     e.preventDefault()
   }
 
-  if (tasks.loading) return <p className="muted">読み込み中…</p>
+  const toolbar = (
+    <div className="flow-bar">
+      <div className="seg two flow-view" role="radiogroup" aria-label="表示の切り替え">
+        <button role="radio" aria-checked={isOpen} className={isOpen ? 'on' : ''} onClick={() => setView('open')}>
+          進行中 {openCount}
+        </button>
+        <button role="radio" aria-checked={!isOpen} className={!isOpen ? 'on' : ''} onClick={() => setView('done')}>
+          完了 {doneList.length}
+        </button>
+      </div>
+      <button className="btn primary small flow-add" onClick={() => openNote('new')}>
+        ＋ メモ
+      </button>
+    </div>
+  )
+
+  if (notes.loading) return <p className="muted">読み込み中…</p>
+
+  // 完了したメモは、円ではなくリストで見ます
+  if (!isOpen)
+    return (
+      <main className="flow">
+        {toolbar}
+        {doneList.length === 0 ? (
+          <div className="empty">
+            <p className="muted">完了したメモはまだありません。進行中のメモを3回タップすると、ここに入ります。</p>
+          </div>
+        ) : (
+          <div className="list">
+            {doneList.map((m) => (
+              <DoneRow key={m.id} note={m} onOpen={() => openNote(m)} onBack={() => actions.toggleDone(m)} />
+            ))}
+          </div>
+        )}
+      </main>
+    )
+
   if (!n)
     return (
-      <div className="empty">
-        <p>進行中のタスクはありません</p>
-        <p className="muted">ボードの「＋」からタスクを追加すると、ここに並びます。</p>
-      </div>
+      <main className="flow">
+        {toolbar}
+        <div className="empty">
+          {
+            <>
+              <p>進行中のメモはありません</p>
+              <p className="muted">
+                就活の中で学んだこと、忘れたくないことを残しておく場所です。面接のふり返りや、説明会で気づいたことなどを書いておきましょう。
+              </p>
+              <button className="btn primary small" onClick={() => openNote('new')}>
+                ＋ 最初のメモを書く
+              </button>
+            </>
+          }
+        </div>
+      </main>
     )
 
   const inToday = current.todo_date === today
+  const firstLine = (current.body || '').split('\n').find((s) => s.trim()) || '本文なし'
 
   return (
     <main className="flow">
-      <p className="gesture-hint">左右で選ぶ ・ 上スワイプで今日のToDoへ ・ 3回タップで完了</p>
+      {toolbar}
+      <p className="gesture-hint">
+        {isOpen ? 'タップで開く ・ 上スワイプでToDoへ ・ 3回タップで完了' : '左右で選ぶ ・ タップで開く'}
+      </p>
 
       <div
         ref={stageRef}
         className="ring-stage"
         tabIndex={0}
-        aria-label={`タスクの円。いま選んでいるのは「${current.name}」。左右の矢印キーで選べます`}
+        aria-label={`メモの円。いま選んでいるのは「${current.title}」。左右の矢印キーで選べます`}
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={(e) => onUp(e, false)}
@@ -249,19 +355,20 @@ export default function Flow({ tasks, actions, openTask }) {
         onKeyDown={onKey}
       >
         <div className="ring-floor" style={{ width: Math.min(R * 2 + CARD_W, 900) }} aria-hidden="true" />
-        {queue.map((t, i) => {
+        {queue.map((m, i) => {
           const a = (norm((i - pos) * step) * Math.PI) / 180
           const x = R * Math.sin(a)
           const z = R * Math.cos(a) - R
           const y = z * 0.18 // 奥のものほど上に見せて、床に並んでいるように見せます
           const front = (Math.cos(a) + 1) / 2 // 手前=1、いちばん奥=0
           const isSel = i === sel
-          const cls = ['ring-card', isSel && 'sel', fly === t.id && 'fly', t.todo_date === today && 'today']
+          const photos = photosOf(m)
+          const cls = ['ring-card', 'note-card', isSel && 'sel', fly === m.id && 'fly', m.todo_date === today && 'today']
             .filter(Boolean)
             .join(' ')
           return (
             <div
-              key={t.id}
+              key={m.id}
               data-idx={i}
               className={cls}
               aria-hidden={!isSel}
@@ -274,20 +381,16 @@ export default function Flow({ tasks, actions, openTask }) {
               <div className="ring-inner">
                 {isSel && <span className="ring-sel-label">SELECTED</span>}
                 <div className="row">
-                  <span>{TYPE_LABEL[t.type]}</span>
-                  <span>{leftText(daysLeft(t.due))}</span>
-                </div>
-                <div className="ring-name">{t.name}</div>
-                {t.priority && <div className="stars">{starText(t.priority)}</div>}
-                <div className="ring-event">{t.event || '内容なし'}</div>
-                <div className="ring-due">{formatDue(t.due)}</div>
-                <div className="ring-progress">
-                  <span className="pbar">
-                    <span style={{ width: `${percentOf(t)}%` }} />
+                  <span>MEMO</span>
+                  <span>
+                    {photos.length > 0 && `📷${photos.length} `}
+                    {shortDate(m.created_at)}
                   </span>
-                  <b>{percentOf(t)}%</b>
                 </div>
-                {t.todo_date === today && <span className="today-badge">今日</span>}
+                {photos.length > 0 && <Thumb path={photos[0]} />}
+                <div className="ring-name note-title">{m.title || '（タイトルなし）'}</div>
+                <div className="ring-event note-excerpt">{m.body || '本文なし'}</div>
+                {m.todo_date === today && <span className="today-badge">今日</span>}
                 {tapInfo.idx === i && tapInfo.n > 0 && (
                   <span className="tap-dots">
                     {'●'.repeat(tapInfo.n)}
@@ -305,28 +408,23 @@ export default function Flow({ tasks, actions, openTask }) {
           <span className="eyebrow">
             SELECTED {sel + 1} / {n}
           </span>
-          {/* 進捗は同じ行に並べて、四角の高さをおさえます */}
-          <ProgressLine item={current} />
-        </div>
-        <div className="next-name">
-          {current.name}
           {inToday && <span className="today-badge">今日のToDo</span>}
         </div>
-        <div className="muted flow-sub">
-          {TYPE_LABEL[current.type]} ・ {current.event || '内容なし'} ・ {formatDue(current.due)}{' '}
-          {leftText(daysLeft(current.due))}
-        </div>
+        <div className="next-name flow-title">{current.title || '（タイトルなし）'}</div>
+        <div className="muted flow-sub">{firstLine}</div>
         <div className="flow-actions">
-          <button className="btn ghost arrow" aria-label="前のタスク" onClick={() => move(-1)}>
+          <button className="btn ghost arrow" aria-label="前のメモ" onClick={() => move(-1)}>
             ←
           </button>
-          <button className="btn ghost" onClick={() => openTask(current)}>
-            編集
+          <button className="btn ghost" onClick={() => openNote(current)}>
+            開く
           </button>
-          <button className="btn primary" onClick={sendUp} disabled={inToday}>
-            {inToday ? 'ToDo追加済み' : 'ToDoへ ↑'}
-          </button>
-          <button className="btn ghost arrow" aria-label="次のタスク" onClick={() => move(1)}>
+          {isOpen && (
+            <button className="btn primary" onClick={sendUp} disabled={inToday}>
+              {inToday ? 'ToDo追加済み' : 'ToDoへ ↑'}
+            </button>
+          )}
+          <button className="btn ghost arrow" aria-label="次のメモ" onClick={() => move(1)}>
             →
           </button>
         </div>

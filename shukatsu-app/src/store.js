@@ -57,6 +57,7 @@ const makeStore = (table, localKey) => (supabase ? remoteStore(table) : localSto
 export const isCloud = Boolean(supabase)
 export const taskStore = makeStore('tasks', 'shukatsu.tasks.v1')
 export const esStore = makeStore('es_entries', 'shukatsu.es.v1')
+export const noteStore = makeStore('notes', 'shukatsu.notes.v1')
 
 // Supabaseのよくあるエラーを、やることがわかる日本語にします
 export const friendlyError = (e, fallback) => {
@@ -67,6 +68,10 @@ export const friendlyError = (e, fallback) => {
     return 'Supabaseの表に新しい列がまだありません。supabase/schema.sql をSQL Editorですべて実行してください。'
   if (/tasks_type_check/i.test(m))
     return 'Supabaseが新しい種類（GD・Webテスト・インターン・選コミュ）にまだ対応していません。supabase/schema.sql をSQL Editorですべて実行してください。'
+  if (/bucket not found/i.test(m) || /row-level security.*storage|storage.*row-level/i.test(m))
+    return '写真の置き場がまだありません。supabase/schema.sql をSQL Editorですべて実行してください。'
+  if (/quota|exceeded the quota/i.test(m))
+    return 'この端末の保存できる量がいっぱいです。写真を減らしてください。'
   if (/permission denied/i.test(m))
     return 'Supabaseの権限が足りません。supabase/schema.sql をSQL Editorですべて実行してください。'
   return m || fallback

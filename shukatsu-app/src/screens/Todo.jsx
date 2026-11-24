@@ -3,7 +3,10 @@ import { byDue, daysLeft, formatDue, leftText, todayISO } from '../lib/dates'
 import { useSwipeTap } from '../lib/gestures'
 import { ProgressLine } from '../components/TaskCard'
 
-function TodoRow({ item, actions, openTask }) {
+// メモの説明（本文の1行目）
+const noteLine = (m) => (m.body || '').split(/\r?\n/).find((x) => x.trim()) || '本文なし'
+
+function TodoRow({ item, actions, openTask, isNote }) {
   const { dx, ready, handlers } = useSwipeTap({
     onSwipeRight: () => (item.done ? null : actions.complete(item, { burst: false })),
     // ボタン以外の場所をタップしたら編集を開きます
@@ -23,17 +26,23 @@ function TodoRow({ item, actions, openTask }) {
       >
         <div className="todo-main">
           <div className="todo-text">
-            <div className="todo-name">{item.name}</div>
-            <div className="todo-sub">
-              {TYPE_LABEL[item.type]} ・ {item.event || '内容なし'}
-              {item.due && ` ・ ${formatDue(item.due)}`}
-              {!item.done && n !== null && <b className={n <= 1 ? 'warn' : ''}> {leftText(n)}</b>}
-            </div>
-            {!item.done && <ProgressLine item={item} />}
+            <div className="todo-name">{isNote ? item.title || '（タイトルなし）' : item.name}</div>
+            {isNote ? (
+              <div className="todo-sub">
+                <b className="note-tag">メモ</b> {noteLine(item)}
+              </div>
+            ) : (
+              <div className="todo-sub">
+                {TYPE_LABEL[item.type]} ・ {item.event || '内容なし'}
+                {item.due && ` ・ ${formatDue(item.due)}`}
+                {!item.done && n !== null && <b className={n <= 1 ? 'warn' : ''}> {leftText(n)}</b>}
+              </div>
+            )}
+            {!item.done && !isNote && <ProgressLine item={item} />}
           </div>
           <button
             className="icon-btn small"
-            aria-label={`「${item.name}」を今日のToDoから外す`}
+            aria-label={`「${item.name ?? item.title}」を今日のToDoから外す`}
             onClick={() => actions.removeToday(item)}
           >
             ×
@@ -41,7 +50,7 @@ function TodoRow({ item, actions, openTask }) {
         </div>
         <button
           className={item.done ? 'btn ghost small done-btn undo' : 'btn small done-btn'}
-          aria-label={`「${item.name}」を${item.done ? '未完了に戻す' : '完了にする'}`}
+          aria-label={`「${item.name ?? item.title}」を${item.done ? '未完了に戻す' : '完了にする'}`}
           onClick={() => (item.done ? actions.toggleDone(item) : actions.complete(item, { burst: false }))}
         >
           {item.done ? '戻す' : '完了'}
@@ -52,14 +61,21 @@ function TodoRow({ item, actions, openTask }) {
 }
 
 // 今日のToDo：ボードや締切から自分で選んだ、今日やるタスクの一覧です。
-export default function Todo({ tasks, actions, openTask, go }) {
-  const { items, loading } = tasks
+export default function Todo({ tasks, actions, openTask, go, notes, noteActions, openNote }) {
+  const loading = tasks.loading || notes.loading
   const today = todayISO()
-  const list = items
-    .filter((t) => t.todo_date === today)
-    .sort((a, b) => Number(a.done) - Number(b.done) || byDue(a, b))
+  // タスクとメモ（メモの画面から入れたもの）を、同じ一覧に並べます
+  const entries = [
+    ...tasks.items.map((item) => ({ item, isNote: false, acts: actions, open: openTask })),
+    ...notes.items.map((item) => ({ item, isNote: true, acts: noteActions, open: openNote })),
+  ]
+  const todays = entries
+    .filter((e) => e.item.todo_date === today)
+    .sort((a, b) => Number(a.item.done) - Number(b.item.done) || Number(a.isNote) - Number(b.isNote) || byDue(a.item, b.item))
+  const list = todays.map((e) => e.item)
   // 前の日にToDoに入れたまま、終わっていないもの
-  const carry = items.filter((t) => t.todo_date && t.todo_date < today && !t.done)
+  const carryEntries = entries.filter((e) => e.item.todo_date && e.item.todo_date < today && !e.item.done)
+  const carry = carryEntries.map((e) => e.item)
   const doneN = list.filter((t) => t.done).length
   const rate = list.length ? Math.round((doneN / list.length) * 100) : 0
 
@@ -84,19 +100,19 @@ export default function Todo({ tasks, actions, openTask, go }) {
           <div className="eyebrow">LEFT OVER</div>
           <p className="muted">前のToDoで終わっていないタスクが{carry.length}件あります。繰り越すものを選んでください。</p>
           <ul className="carry-list">
-            {carry.map((t) => (
+            {carryEntries.map(({ item: t, isNote, acts }) => (
               <li key={t.id}>
                 <span className="carry-name">
-                  {t.name}
-                  <small>{t.event || '内容なし'}</small>
+                  {isNote ? t.title || '（タイトルなし）' : t.name}
+                  <small>{isNote ? `メモ ・ ${noteLine(t)}` : t.event || '内容なし'}</small>
                 </span>
-                <button className="btn ghost small" onClick={() => actions.addToday(t)}>
+                <button className="btn ghost small" onClick={() => acts.addToday(t)}>
                   今日へ
                 </button>
                 <button
                   className="icon-btn small"
-                  aria-label={`「${t.name}」を繰り越さない`}
-                  onClick={() => actions.removeToday(t)}
+                  aria-label={`「${t.name ?? t.title}」を繰り越さない`}
+                  onClick={() => acts.removeToday(t)}
                 >
                   ×
                 </button>
@@ -104,7 +120,15 @@ export default function Todo({ tasks, actions, openTask, go }) {
             ))}
           </ul>
           {carry.length > 1 && (
-            <button className="btn ghost small" onClick={() => actions.addTodayMany(carry)}>
+            <button
+              className="btn ghost small"
+              onClick={() => {
+                const t = carryEntries.filter((e) => !e.isNote).map((e) => e.item)
+                const m = carryEntries.filter((e) => e.isNote).map((e) => e.item)
+                if (t.length) actions.addTodayMany(t)
+                if (m.length) noteActions.addTodayMany(m)
+              }}
+            >
               すべて今日へ
             </button>
           )}
@@ -119,7 +143,7 @@ export default function Todo({ tasks, actions, openTask, go }) {
           <div className="empty">
             <p>今日のToDoはまだ空です</p>
             <p className="muted">
-              ボードや締切でタスクを右にスワイプするか、フローで上にスワイプすると、ここに入ります。
+              ボードや締切でタスクを右にスワイプするか、メモで上にスワイプすると、ここに入ります。
             </p>
             <div className="sample-row">
               <button className="btn ghost small" onClick={() => go('board')}>
@@ -131,8 +155,8 @@ export default function Todo({ tasks, actions, openTask, go }) {
             </div>
           </div>
         )}
-        {list.map((t) => (
-          <TodoRow key={t.id} item={t} actions={actions} openTask={openTask} />
+        {todays.map(({ item, isNote, acts, open }) => (
+          <TodoRow key={item.id} item={item} actions={acts} openTask={open} isNote={isNote} />
         ))}
       </div>
     </main>

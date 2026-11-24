@@ -1,8 +1,36 @@
 import { friendlyError } from '../store'
-import { useState } from 'react'
-import { TYPES, starText } from '../lib/constants'
+import { useMemo, useState } from 'react'
+import { TYPES } from '../lib/constants'
 import { byDue, daysLeft, formatDue, formatToday, leftText, todayISO } from '../lib/dates'
 import { isSampleEs, isSampleTask, sampleEs, sampleTasks } from '../lib/samples'
+import { usePhotoUrls } from '../lib/photos'
+
+// メモを3つ、ランダムに選びます
+const pickRandom = (list, k) => {
+  const a = [...list]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a.slice(0, k)
+}
+
+// ホームに出すメモの1行（写真があれば小さく出します）
+function MemoItem({ note, onOpen }) {
+  const photos = Array.isArray(note.photos) ? note.photos : []
+  const [url] = usePhotoUrls(photos.slice(0, 1))
+  return (
+    <li>
+      <button onClick={onOpen}>
+        {photos.length > 0 && <span className="memo-photo">{url && <img src={url} alt="" />}</span>}
+        <span className="memo-text">
+          <b>{note.title || '（タイトルなし）'}</b>
+          <small>{(note.body || '').split(/\r?\n/).find((x) => x.trim()) || '本文なし'}</small>
+        </span>
+      </button>
+    </li>
+  )
+}
 
 // サンプルデータの追加・削除ボタン
 function SampleTools({ tasks, es }) {
@@ -64,7 +92,7 @@ function SampleTools({ tasks, es }) {
 }
 
 // ホロ（ホーム画面）：いまの就活の状況をひと目で見るための画面です。
-export default function Home({ tasks, es, openTask, go }) {
+export default function Home({ tasks, es, notes, openTask, openNote, go }) {
   const { items, loading } = tasks
   const esCount = es.items.length
   const active = items.filter((i) => !i.done)
@@ -75,16 +103,15 @@ export default function Home({ tasks, es, openTask, go }) {
   const next = dated[0]
   const thisWeek = dated.filter((i) => daysLeft(i.due) <= 7).length
   const overdue = dated.filter((i) => daysLeft(i.due) < 0).length
-  const todayList = items.filter((i) => i.todo_date === todayISO())
+  // 今日のToDo（メモの画面から入れたメモも数えます）
+  const todayList = [...items, ...(notes?.items || [])].filter((i) => i.todo_date === todayISO())
   const todayDone = todayList.filter((i) => i.done).length
 
-  // 志望度の高い順（同じ企業は1回だけ）
-  const seen = new Set()
-  const top = items
-    .filter((i) => i.priority)
-    .sort((a, b) => b.priority - a.priority)
-    .filter((i) => !seen.has(i.name) && seen.add(i.name))
-    .slice(0, 3)
+  // メモをランダムに3つ（「入れ替える」を押すと選び直します）
+  const noteItems = notes?.items || []
+  const [shuffle, setShuffle] = useState(0)
+  const memoIds = noteItems.map((m) => m.id).join(',')
+  const memos = useMemo(() => pickRandom(noteItems, 3), [memoIds, shuffle])
 
   // 完了率のリング
   const R = 52
@@ -165,21 +192,28 @@ export default function Home({ tasks, es, openTask, go }) {
       </section>
 
       <section className="panel block">
-        <div className="eyebrow">TOP CHOICES</div>
-        {top.length ? (
-          <ul className="top-list">
-            {top.map((i) => (
-              <li key={i.id}>
-                <button onClick={() => openTask(i)}>
-                  <span>{i.name}</span>
-                  <span className="stars">{starText(i.priority)}</span>
-                </button>
-              </li>
+        <div className="row memo-head">
+          <span className="eyebrow">MEMO</span>
+          {noteItems.length > 3 && (
+            <button className="btn ghost small" onClick={() => setShuffle((v) => v + 1)}>
+              入れ替える
+            </button>
+          )}
+        </div>
+        {memos.length ? (
+          <ul className="memo-list">
+            {memos.map((m) => (
+              <MemoItem key={m.id} note={m} onOpen={() => openNote(m)} />
             ))}
           </ul>
         ) : (
-          <p className="muted">タスクに志望度（★）を付けると、ここに上位3社が出ます。</p>
+          <p className="muted">
+            就活の中で学んだことや、忘れたくないことを「メモ」に書くと、ここにランダムで3つ出ます。
+          </p>
         )}
+        <button className="btn ghost small memo-more" onClick={() => go('flow')}>
+          メモを開く
+        </button>
       </section>
 
       <button className="btn primary wide" onClick={() => go('todo')}>

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
-import { esStore, friendlyError, isCloud, taskStore, useCollection } from './store'
+import { esStore, friendlyError, isCloud, noteStore, taskStore, useCollection } from './store'
 import { todayISO } from './lib/dates'
 import TaskEditor from './components/TaskEditor'
+import NoteEditor from './components/NoteEditor'
 import ThemePicker from './components/ThemePicker'
 import { CompleteBurst, Toast } from './components/Feedback'
 import Home from './screens/Home'
@@ -16,8 +17,8 @@ const SCREENS = [
   { key: 'home', label: 'ホーム', icon: '◎', eyebrow: 'HOLO', title: 'ホーム' },
   { key: 'todo', label: '今日', icon: '☑', eyebrow: 'TODAY', title: '今日のToDo' },
   { key: 'deadline', label: '締切', icon: '◷', eyebrow: 'DEADLINE', title: '締切' },
-  { key: 'flow', label: 'フロー', icon: '⇄', eyebrow: 'FLOW', title: 'フロー' },
   { key: 'board', label: 'ボード', icon: '▦', eyebrow: 'TASK BOARD', title: '選考ボード' },
+  { key: 'flow', label: 'メモ', icon: '✧', eyebrow: 'MEMO', title: 'メモ' },
   { key: 'es', label: 'ES', icon: '✎', eyebrow: 'ES STOCK', title: 'ESストック' },
 ]
 
@@ -119,6 +120,8 @@ function Shell({ session }) {
   const [editing, setEditing] = useState(null) // null | 'new' | task
   const tasks = useCollection(taskStore)
   const es = useCollection(esStore)
+  const notes = useCollection(noteStore)
+  const [noteEditing, setNoteEditing] = useState(null) // null | 'new' | メモ
 
   useEffect(() => {
     const onHash = () => setScreen(screenFromHash())
@@ -142,16 +145,17 @@ function Shell({ session }) {
   const fail = (e) => setToast({ text: friendlyError(e, '保存に失敗しました'), error: true, key: Date.now() })
   const undoable = (fn) => () => fn().catch(fail)
 
-  // どの画面からでも使う、タスクの操作です
-  const actions = {
+  // どの画面からでも使う、タスク・メモの操作です（coll：操作する一覧）
+  const nameOf = (t) => t.name ?? t.title ?? ''
+  const makeActions = (coll) => ({
     async complete(task, { burst: show = true } = {}) {
       if (task.done) return say('すでに完了しています')
       try {
-        await tasks.update(task.id, { done: true })
-        if (show) setBurst(task)
+        await coll.update(task.id, { done: true })
+        if (show) setBurst({ id: task.id, name: nameOf(task), event: task.event })
         say(
-          `「${task.name}」を完了にしました`,
-          undoable(() => tasks.update(task.id, { done: false })),
+          `「${nameOf(task)}」を完了にしました`,
+          undoable(() => coll.update(task.id, { done: false })),
         )
       } catch (e) {
         fail(e)
@@ -160,10 +164,10 @@ function Shell({ session }) {
     async addToday(task) {
       if (task.todo_date === todayISO()) return say('すでに今日のToDoに入っています')
       try {
-        await tasks.update(task.id, { todo_date: todayISO() })
+        await coll.update(task.id, { todo_date: todayISO() })
         say(
-          `「${task.name}」を今日のToDoに入れました`,
-          undoable(() => tasks.update(task.id, { todo_date: task.todo_date ?? null })),
+          `「${nameOf(task)}」を今日のToDoに入れました`,
+          undoable(() => coll.update(task.id, { todo_date: task.todo_date ?? null })),
         )
       } catch (e) {
         fail(e)
@@ -171,7 +175,7 @@ function Shell({ session }) {
     },
     async addTodayMany(list) {
       try {
-        await tasks.updateMany(
+        await coll.updateMany(
           list.map((t) => t.id),
           { todo_date: todayISO() },
         )
@@ -182,10 +186,10 @@ function Shell({ session }) {
     },
     async removeToday(task) {
       try {
-        await tasks.update(task.id, { todo_date: null })
+        await coll.update(task.id, { todo_date: null })
         say(
-          `「${task.name}」を今日のToDoから外しました`,
-          undoable(() => tasks.update(task.id, { todo_date: task.todo_date })),
+          `「${nameOf(task)}」を今日のToDoから外しました`,
+          undoable(() => coll.update(task.id, { todo_date: task.todo_date })),
         )
       } catch (e) {
         fail(e)
@@ -194,15 +198,17 @@ function Shell({ session }) {
     // 完了 ⇔ 未完了 を切り替えます
     async toggleDone(task) {
       try {
-        await tasks.update(task.id, { done: !task.done })
+        await coll.update(task.id, { done: !task.done })
       } catch (e) {
         fail(e)
       }
     },
-  }
+  })
+  const actions = makeActions(tasks)
+  const noteActions = makeActions(notes)
 
   const meta = SCREENS.find((s) => s.key === screen)
-  const loadError = tasks.error || es.error
+  const loadError = tasks.error || es.error || notes.error
   const props = { tasks, actions, openTask: setEditing }
 
   return (
@@ -226,10 +232,10 @@ function Shell({ session }) {
       )}
       {loadError && <p className="error">{loadError}</p>}
 
-      {screen === 'home' && <Home {...props} es={es} go={go} />}
-      {screen === 'todo' && <Todo {...props} go={go} />}
+      {screen === 'home' && <Home {...props} es={es} notes={notes} openNote={setNoteEditing} go={go} />}
+      {screen === 'todo' && <Todo {...props} go={go} notes={notes} noteActions={noteActions} openNote={setNoteEditing} />}
       {screen === 'board' && <Board key={boardFilter} {...props} initialFilter={boardFilter} />}
-      {screen === 'flow' && <Flow {...props} />}
+      {screen === 'flow' && <Flow notes={notes} actions={noteActions} openNote={setNoteEditing} />}
       {screen === 'deadline' && <Deadlines {...props} />}
       {screen === 'es' && <EsStock es={es} />}
 
@@ -255,6 +261,15 @@ function Shell({ session }) {
           onClose={() => setEditing(null)}
           onSave={(values) => (editing === 'new' ? tasks.add(values) : tasks.update(editing.id, values))}
           onDelete={() => tasks.remove(editing.id)}
+        />
+      )}
+
+      {noteEditing && (
+        <NoteEditor
+          item={noteEditing === 'new' ? null : noteEditing}
+          onClose={() => setNoteEditing(null)}
+          onSave={(values) => (noteEditing === 'new' ? notes.add(values) : notes.update(noteEditing.id, values))}
+          onDelete={() => notes.remove(noteEditing.id)}
         />
       )}
 
